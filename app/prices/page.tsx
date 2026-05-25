@@ -161,21 +161,38 @@ export default function PricesPage() {
     fetchData()
   }
 
+  const clearSearch = () => {
+    setSearch('')
+    setSearchInput('')
+    setShowSuggestions(false)
+  }
+
+  const clearAll = () => {
+    setSearch('')
+    setSearchInput('')
+    setSelectedCategory('')
+    setShowSuggestions(false)
+  }
+
+  const q = search.trim().toLowerCase()
+
   const filtered = items.filter(item => {
-    const matchSearch = !search ||
-      item.description?.toLowerCase().includes(search.toLowerCase()) ||
-      item.supplier?.toLowerCase().includes(search.toLowerCase()) ||
-      item.categories?.name?.toLowerCase().includes(search.toLowerCase())
+    const matchSearch = !q ||
+      (item.description || '').toLowerCase().includes(q) ||
+      (item.supplier || '').toLowerCase().includes(q) ||
+      (item.categories?.name || '').toLowerCase().includes(q) ||
+      (item.unit || '').toLowerCase().includes(q) ||
+      (item.notes || '').toLowerCase().includes(q)
     const matchCat = !selectedCategory ||
-      item.category_id === parseInt(selectedCategory)
+      String(item.category_id) === String(selectedCategory)
     return matchSearch && matchCat
   })
 
-  const suggestions = searchInput.length >= 1
+  const suggestions = searchInput.trim().length >= 1
     ? items.filter(item =>
-        item.description?.toLowerCase().includes(searchInput.toLowerCase()) ||
-        item.supplier?.toLowerCase().includes(searchInput.toLowerCase()) ||
-        item.categories?.name?.toLowerCase().includes(searchInput.toLowerCase())
+        (item.description || '').toLowerCase().includes(searchInput.toLowerCase()) ||
+        (item.supplier || '').toLowerCase().includes(searchInput.toLowerCase()) ||
+        (item.categories?.name || '').toLowerCase().includes(searchInput.toLowerCase())
       ).slice(0, 8)
     : []
 
@@ -183,11 +200,19 @@ export default function PricesPage() {
     year: 'numeric', month: 'short', day: 'numeric'
   })
 
+  const getBUFlag = (id: number) => {
+    if (id === 1) return '🇵🇭'
+    if (id === 2) return '🇸🇦'
+    if (id === 3) return '🇨🇦'
+    if (id === 4) return '🇦🇪'
+    return '🌍'
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f8', fontFamily: 'Arial, sans-serif' }}>
       <div style={{ padding: '28px 32px' }}>
 
-        {/* Header */}
+        {/* ── PAGE HEADER ── */}
         <div style={{
           display: 'flex', justifyContent: 'space-between',
           alignItems: 'center', marginBottom: '24px'
@@ -200,15 +225,22 @@ export default function PricesPage() {
               {items.length} items · Click any row to view details or edit
             </p>
           </div>
-          <button onClick={() => setShowAddForm(!showAddForm)} style={{
-            background: 'linear-gradient(135deg, #1565C0, #0288D1)',
-            color: 'white', border: 'none',
-            padding: '10px 20px', borderRadius: '8px',
-            fontSize: '14px', fontWeight: '600', cursor: 'pointer'
-          }}>➕ Add Item</button>
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            style={{
+              background: showAddForm
+                ? '#e0e0e0'
+                : 'linear-gradient(135deg, #1565C0, #0288D1)',
+              color: showAddForm ? '#333' : 'white',
+              border: 'none', padding: '10px 20px',
+              borderRadius: '8px', fontSize: '14px',
+              fontWeight: '600', cursor: 'pointer'
+            }}>
+            {showAddForm ? '✕ Cancel' : '➕ Add Item'}
+          </button>
         </div>
 
-        {/* BU Tabs */}
+        {/* ── BU TABS ── */}
         <div style={{ display: 'flex', gap: '4px', marginBottom: '0' }}>
           {tabs.map(tab => (
             <button key={tab.id}
@@ -228,7 +260,7 @@ export default function PricesPage() {
           ))}
         </div>
 
-        {/* Main Panel */}
+        {/* ── COMING SOON PANEL ── */}
         {activeTab !== 'philippines' ? (
           <div style={{
             background: 'white', borderRadius: '0 12px 12px 12px',
@@ -251,15 +283,18 @@ export default function PricesPage() {
             overflow: 'visible'
           }}>
 
-            {/* Add Form */}
+            {/* ── ADD FORM ── */}
             {showAddForm && (
               <div style={{
                 padding: '24px',
                 background: '#E3F2FD',
-                borderBottom: '1px solid #e0e0e0',
+                borderBottom: '1px solid #bbdefb',
                 borderRadius: '0 12px 0 0'
               }}>
-                <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#0d2137', marginBottom: '16px' }}>
+                <h3 style={{
+                  fontSize: '15px', fontWeight: '600',
+                  color: '#0d2137', marginBottom: '16px', marginTop: 0
+                }}>
                   ➕ Add New Item
                 </h3>
                 <div style={{
@@ -289,7 +324,6 @@ export default function PricesPage() {
                     </div>
                   ))}
 
-                  {/* Category */}
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#333', marginBottom: '4px' }}>
                       Category
@@ -305,7 +339,6 @@ export default function PricesPage() {
                     </select>
                   </div>
 
-                  {/* Business Unit */}
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#333', marginBottom: '4px' }}>
                       Business Unit
@@ -317,17 +350,16 @@ export default function PricesPage() {
                       {businessUnits.map(bu => (
                         <option key={bu.id} value={bu.id}>{bu.label}</option>
                       ))}
-                      <option value='new'>+ Add new BU...</option>
+                      <option value='new'>➕ Add new BU...</option>
                     </select>
                   </div>
 
-                  {/* Full Description */}
                   <div style={{ gridColumn: '1 / -1' }}>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#333', marginBottom: '4px' }}>
                       Full Description
                     </label>
                     <textarea
-                      placeholder="Detailed description of this item..."
+                      placeholder="Detailed description, specs, or usage notes..."
                       value={newItem.full_description}
                       onChange={(e) => setNewItem({ ...newItem, full_description: e.target.value })}
                       rows={3}
@@ -335,14 +367,12 @@ export default function PricesPage() {
                     />
                   </div>
 
-                  {/* Photo Upload */}
                   <div style={{ gridColumn: '1 / -1' }}>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#333', marginBottom: '4px' }}>
                       Item Photo
                     </label>
                     <input
-                      type="file"
-                      accept="image/*"
+                      type="file" accept="image/*"
                       onChange={async (e) => {
                         const file = e.target.files?.[0]
                         if (file) {
@@ -352,20 +382,30 @@ export default function PricesPage() {
                       }}
                       style={{ fontSize: '13px', color: '#000' }}
                     />
-                    {uploading && <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>Uploading...</span>}
+                    {uploading && (
+                      <span style={{ fontSize: '12px', color: '#1565C0', marginLeft: '8px' }}>
+                        ⏳ Uploading...
+                      </span>
+                    )}
                     {newItem.image_url && (
                       <img src={newItem.image_url} alt="preview"
-                        style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', marginTop: '8px', display: 'block' }} />
+                        style={{
+                          width: '80px', height: '80px',
+                          objectFit: 'cover', borderRadius: '8px',
+                          marginTop: '8px', display: 'block',
+                          border: '2px solid #1565C0'
+                        }} />
                     )}
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
                   <button onClick={handleAddItem} disabled={saving} style={{
-                    background: '#1565C0', color: 'white', border: 'none',
+                    background: saving ? '#90CAF9' : '#1565C0',
+                    color: 'white', border: 'none',
                     padding: '10px 24px', borderRadius: '8px',
                     fontSize: '14px', fontWeight: '600', cursor: 'pointer'
-                  }}>{saving ? 'Saving...' : '💾 Save Item'}</button>
+                  }}>{saving ? '⏳ Saving...' : '💾 Save Item'}</button>
                   <button onClick={() => setShowAddForm(false)} style={{
                     background: '#e0e0e0', color: '#333', border: 'none',
                     padding: '10px 24px', borderRadius: '8px',
@@ -375,7 +415,7 @@ export default function PricesPage() {
               </div>
             )}
 
-            {/* Search & Filter */}
+            {/* ── SEARCH & FILTER BAR ── */}
             <div style={{
               padding: '16px 24px',
               borderBottom: '1px solid #f0f0f0',
@@ -383,57 +423,69 @@ export default function PricesPage() {
               flexWrap: 'wrap' as const,
               alignItems: 'flex-start'
             }}>
-              {/* Search Box */}
+              {/* Search Input */}
               <div style={{ flex: 1, minWidth: '280px', position: 'relative' as const }}>
                 <div style={{ display: 'flex' }}>
                   <input
                     type="text"
-                    placeholder="Search description, supplier, category..."
+                    placeholder="🔍 Search description, supplier, category..."
                     value={searchInput}
                     onChange={(e) => {
-                      setSearchInput(e.target.value)
+                      const val = e.target.value
+                      setSearchInput(val)
+                      setSearch(val)
                       setShowSuggestions(true)
-                      if (e.target.value === '') setSearch('')
                     }}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') { setSearch(searchInput); setShowSuggestions(false) }
-                      if (e.key === 'Escape') setShowSuggestions(false)
+                      if (e.key === 'Enter') {
+                        setSearch(searchInput)
+                        setShowSuggestions(false)
+                      }
+                      if (e.key === 'Escape') {
+                        setShowSuggestions(false)
+                      }
                     }}
-                    onFocus={() => setShowSuggestions(true)}
+                    onFocus={() => { if (searchInput) setShowSuggestions(true) }}
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                     style={{
                       ...inputStyle,
                       flex: 1,
                       padding: '10px 16px',
-                      borderRadius: searchInput ? '8px 0 0 8px' : '8px 0 0 8px',
+                      borderRadius: '8px 0 0 8px',
                       borderRight: 'none',
+                      fontSize: '13px'
                     }}
                   />
                   {searchInput && (
                     <button
-                      onClick={() => { setSearchInput(''); setSearch(''); setShowSuggestions(false) }}
+                      onClick={clearSearch}
                       style={{
                         background: '#f5f5f5',
                         border: '1.5px solid #e0e0e0',
                         borderLeft: 'none', borderRight: 'none',
-                        color: '#999', padding: '0 10px',
-                        fontSize: '18px', cursor: 'pointer'
+                        color: '#999', padding: '0 12px',
+                        fontSize: '18px', cursor: 'pointer',
+                        lineHeight: 1
                       }}>×</button>
                   )}
                   <button
-                    onClick={() => { setSearch(searchInput); setShowSuggestions(false) }}
+                    onClick={() => {
+                      setSearch(searchInput)
+                      setShowSuggestions(false)
+                    }}
                     style={{
                       background: 'linear-gradient(135deg, #1565C0, #0288D1)',
                       color: 'white', border: 'none',
                       padding: '10px 18px',
                       borderRadius: '0 8px 8px 0',
                       fontSize: '13px', fontWeight: '600',
-                      cursor: 'pointer', whiteSpace: 'nowrap' as const
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap' as const
                     }}>🔍 Search</button>
                 </div>
 
-                {/* Predictive Suggestions */}
-                {showSuggestions && searchInput.length >= 1 && (
+                {/* ── PREDICTIVE SUGGESTIONS ── */}
+                {showSuggestions && searchInput.trim().length >= 1 && (
                   <div style={{
                     position: 'absolute' as const,
                     top: '100%', left: 0, right: 0,
@@ -441,21 +493,23 @@ export default function PricesPage() {
                     background: 'white',
                     border: '1.5px solid #e0e0e0',
                     borderTop: 'none',
-                    borderRadius: '0 0 10px 10px',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                    maxHeight: '300px', overflowY: 'auto' as const
+                    borderRadius: '0 0 12px 12px',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
+                    maxHeight: '320px',
+                    overflowY: 'auto' as const
                   }}>
                     {suggestions.length > 0 ? (
                       <>
                         <div style={{
                           padding: '6px 16px',
                           fontSize: '10px', color: '#999',
-                          fontWeight: '600', letterSpacing: '1px',
+                          fontWeight: '700',
+                          letterSpacing: '1px',
                           textTransform: 'uppercase' as const,
                           borderBottom: '1px solid #f0f0f0',
                           background: '#fafafa'
                         }}>
-                          {suggestions.length} suggestion{suggestions.length > 1 ? 's' : ''}
+                          {suggestions.length} suggestion{suggestions.length !== 1 ? 's' : ''}
                         </div>
                         {suggestions.map((item: any) => (
                           <div
@@ -471,40 +525,47 @@ export default function PricesPage() {
                               cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '12px'
+                              gap: '12px',
+                              background: 'white'
                             }}
                             onMouseOver={(e) => e.currentTarget.style.background = '#f0f7ff'}
                             onMouseOut={(e) => e.currentTarget.style.background = 'white'}
                           >
                             {item.image_url ? (
                               <img src={item.image_url} alt=""
-                                style={{ width: '32px', height: '32px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }} />
+                                style={{
+                                  width: '36px', height: '36px',
+                                  objectFit: 'cover', borderRadius: '6px',
+                                  flexShrink: 0
+                                }} />
                             ) : (
                               <div style={{
-                                width: '32px', height: '32px',
+                                width: '36px', height: '36px',
                                 background: '#f0f0f0', borderRadius: '6px',
                                 display: 'flex', alignItems: 'center',
-                                justifyContent: 'center', fontSize: '14px',
+                                justifyContent: 'center', fontSize: '16px',
                                 flexShrink: 0
                               }}>📦</div>
                             )}
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{
                                 fontSize: '13px', color: '#0d2137',
-                                fontWeight: '500', overflow: 'hidden',
-                                textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const
+                                fontWeight: '500',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap' as const
                               }}>
                                 {item.description}
                               </div>
-                              <div style={{ fontSize: '11px', color: '#999', marginTop: '1px' }}>
+                              <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
                                 {item.categories?.name || 'Uncategorized'} ·{' '}
                                 {item.supplier || 'No supplier'} ·{' '}
-                                <span style={{ color: '#1565C0', fontWeight: '600' }}>
+                                <span style={{ color: '#1565C0', fontWeight: '700' }}>
                                   ₱{parseFloat(item.base_price).toLocaleString()}
                                 </span>
                               </div>
                             </div>
-                            <span style={{ fontSize: '11px', color: '#ccc', flexShrink: 0 }}>↵</span>
+                            <span style={{ fontSize: '12px', color: '#bbb', flexShrink: 0 }}>↵</span>
                           </div>
                         ))}
                       </>
@@ -513,7 +574,7 @@ export default function PricesPage() {
                         padding: '20px', textAlign: 'center',
                         color: '#999', fontSize: '13px'
                       }}>
-                        No results for "{searchInput}"
+                        😕 No results for "<strong>{searchInput}</strong>"
                       </div>
                     )}
                   </div>
@@ -524,34 +585,112 @@ export default function PricesPage() {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                style={{ ...inputStyle, minWidth: '180px', padding: '10px 16px' }}>
+                style={{
+                  ...inputStyle,
+                  minWidth: '180px',
+                  padding: '10px 16px'
+                }}>
                 <option value=''>All categories</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
 
-              {/* Item Count */}
-              <div style={{
-                padding: '10px 16px', background: '#f5f5f5',
-                borderRadius: '8px', fontSize: '13px',
-                color: '#666', whiteSpace: 'nowrap' as const,
-                display: 'flex', alignItems: 'center'
-              }}>
-                {filtered.length} of {items.length} items
+              {/* View All Button */}
+              <button
+                onClick={clearAll}
+                style={{
+                  padding: '10px 16px',
+                  background: search || selectedCategory ? '#1565C0' : '#f5f5f5',
+                  color: search || selectedCategory ? 'white' : '#666',
+                  border: 'none', borderRadius: '8px',
+                  fontSize: '13px', fontWeight: '600',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap' as const
+                }}>
+                📋 View All
+              </button>
+            </div>
+
+            {/* ── SEARCH STATUS BAR ── */}
+            <div style={{
+              padding: '10px 24px',
+              background: search ? '#E8F4FD' : '#fafafa',
+              borderBottom: '1px solid #f0f0f0',
+              display: 'flex', alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap' as const, gap: '8px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {search ? (
+                  <>
+                    <span style={{ fontSize: '13px', color: '#1565C0' }}>
+                      🔍 Results for: <strong>"{search}"</strong>
+                    </span>
+                    <span style={{
+                      background: '#1565C0', color: 'white',
+                      fontSize: '11px', padding: '2px 8px',
+                      borderRadius: '99px', fontWeight: '600'
+                    }}>
+                      {filtered.length} found
+                    </span>
+                  </>
+                ) : (
+                  <span style={{ fontSize: '13px', color: '#666' }}>
+                    Showing all{' '}
+                    <strong>{filtered.length}</strong> items
+                    {selectedCategory && (
+                      <span style={{ color: '#1565C0' }}> · filtered by category</span>
+                    )}
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {search && (
+                  <button onClick={clearSearch} style={{
+                    background: 'white', color: '#1565C0',
+                    border: '1.5px solid #1565C0',
+                    padding: '4px 12px', borderRadius: '6px',
+                    fontSize: '12px', fontWeight: '600', cursor: 'pointer'
+                  }}>✕ Clear Search</button>
+                )}
+                {selectedCategory && (
+                  <button onClick={() => setSelectedCategory('')} style={{
+                    background: 'white', color: '#666',
+                    border: '1.5px solid #e0e0e0',
+                    padding: '4px 12px', borderRadius: '6px',
+                    fontSize: '12px', cursor: 'pointer'
+                  }}>✕ Clear Filter</button>
+                )}
               </div>
             </div>
 
-            {/* Table */}
+            {/* ── TABLE ── */}
             {loading ? (
-              <div style={{ padding: '48px', textAlign: 'center', color: '#666' }}>
-                <div style={{ fontSize: '24px', marginBottom: '8px' }}>⏳</div>
+              <div style={{ padding: '60px', textAlign: 'center', color: '#666' }}>
+                <div style={{ fontSize: '32px', marginBottom: '12px' }}>⏳</div>
                 Loading prices...
               </div>
             ) : filtered.length === 0 ? (
-              <div style={{ padding: '48px', textAlign: 'center', color: '#666' }}>
-                <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
-                {search ? `No results for "${search}"` : 'No items yet. Click "Add Item" to get started!'}
+              <div style={{ padding: '60px', textAlign: 'center', color: '#666' }}>
+                <div style={{ fontSize: '40px', marginBottom: '12px' }}>📭</div>
+                <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>
+                  {search ? `No results for "${search}"` : 'No items yet'}
+                </div>
+                <div style={{ fontSize: '13px', color: '#999' }}>
+                  {search
+                    ? 'Try a different search term or click "View All"'
+                    : 'Click "Add Item" to get started'}
+                </div>
+                {search && (
+                  <button onClick={clearAll} style={{
+                    marginTop: '16px',
+                    background: '#1565C0', color: 'white',
+                    border: 'none', padding: '10px 24px',
+                    borderRadius: '8px', fontSize: '13px',
+                    fontWeight: '600', cursor: 'pointer'
+                  }}>📋 View All Items</button>
+                )}
               </div>
             ) : (
               <div style={{ overflowX: 'auto' as const }}>
@@ -561,46 +700,55 @@ export default function PricesPage() {
                       {['', 'Category', 'Description', 'Unit', 'Unit Price (PHP)', 'Supplier', 'BU', 'Added by', 'Date', 'Actions'].map(h => (
                         <th key={h} style={{
                           padding: '12px 14px', textAlign: 'left',
-                          fontWeight: '600', color: '#555',
-                          borderBottom: '2px solid #e0e0e0',
+                          fontWeight: '700', color: '#555',
+                          borderBottom: '2px solid #e8e8e8',
                           whiteSpace: 'nowrap' as const,
-                          fontSize: '12px'
+                          fontSize: '11px',
+                          textTransform: 'uppercase' as const,
+                          letterSpacing: '0.5px'
                         }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.map((item: any, i: number) => (
-                      <tr key={item.id}
+                      <tr
+                        key={item.id}
                         onClick={() => { setSelectedItem(item); setEditMode(false) }}
                         style={{
                           borderBottom: '1px solid #f0f0f0',
-                          background: i % 2 === 0 ? 'white' : '#fafafa',
+                          background: 'white',
                           cursor: 'pointer',
                           transition: 'background 0.1s'
                         }}
                         onMouseOver={(e) => e.currentTarget.style.background = '#f0f7ff'}
-                        onMouseOut={(e) => e.currentTarget.style.background = i % 2 === 0 ? 'white' : '#fafafa'}
+                        onMouseOut={(e) => e.currentTarget.style.background = 'white'}
                       >
                         {/* Thumbnail */}
                         <td style={{ padding: '8px 14px' }}>
                           {item.image_url ? (
                             <img src={item.image_url} alt=""
-                              style={{ width: '38px', height: '38px', objectFit: 'cover', borderRadius: '6px' }} />
+                              style={{
+                                width: '40px', height: '40px',
+                                objectFit: 'cover', borderRadius: '8px',
+                                border: '1px solid #e0e0e0'
+                              }} />
                           ) : (
                             <div style={{
-                              width: '38px', height: '38px', background: '#f0f0f0',
-                              borderRadius: '6px', display: 'flex', alignItems: 'center',
-                              justifyContent: 'center', fontSize: '16px'
+                              width: '40px', height: '40px',
+                              background: '#f5f5f5', borderRadius: '8px',
+                              display: 'flex', alignItems: 'center',
+                              justifyContent: 'center', fontSize: '18px',
+                              border: '1px solid #e8e8e8'
                             }}>📦</div>
                           )}
                         </td>
 
-                        {/* Category */}
+                        {/* Category Badge */}
                         <td style={{ padding: '10px 14px' }}>
                           <span style={{
                             background: '#E3F2FD', color: '#1565C0',
-                            padding: '3px 8px', borderRadius: '99px',
+                            padding: '3px 10px', borderRadius: '99px',
                             fontSize: '11px', fontWeight: '600',
                             whiteSpace: 'nowrap' as const
                           }}>
@@ -609,40 +757,53 @@ export default function PricesPage() {
                         </td>
 
                         {/* Description */}
-                        <td style={{ padding: '10px 14px', color: '#0d2137', fontWeight: '500', maxWidth: '220px' }}>
-                          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                        <td style={{ padding: '10px 14px', maxWidth: '220px' }}>
+                          <div style={{
+                            color: '#0d2137', fontWeight: '500',
+                            overflow: 'hidden', textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap' as const
+                          }}>
                             {item.description}
                           </div>
                           {item.full_description && (
-                            <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                            <div style={{
+                              fontSize: '11px', color: '#aaa',
+                              marginTop: '2px', overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap' as const
+                            }}>
                               {item.full_description.substring(0, 50)}...
                             </div>
                           )}
                         </td>
 
                         {/* Unit */}
-                        <td style={{ padding: '10px 14px', color: '#666' }}>{item.unit || '-'}</td>
+                        <td style={{ padding: '10px 14px', color: '#666' }}>
+                          {item.unit || '-'}
+                        </td>
 
                         {/* Price */}
-                        <td style={{ padding: '10px 14px', fontWeight: '700', color: '#1565C0', whiteSpace: 'nowrap' as const }}>
+                        <td style={{
+                          padding: '10px 14px',
+                          fontWeight: '700', color: '#1565C0',
+                          whiteSpace: 'nowrap' as const, fontSize: '14px'
+                        }}>
                           ₱{parseFloat(item.base_price).toLocaleString()}
                         </td>
 
                         {/* Supplier */}
                         <td style={{ padding: '10px 14px', color: '#555', maxWidth: '140px' }}>
-                          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                          <div style={{
+                            overflow: 'hidden', textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap' as const
+                          }}>
                             {item.supplier || '-'}
                           </div>
                         </td>
 
-                        {/* BU */}
-                        <td style={{ padding: '10px 14px' }}>
-                          <span style={{ fontSize: '16px' }}>
-                            {item.business_unit_id === 1 ? '🇵🇭' :
-                             item.business_unit_id === 2 ? '🇸🇦' :
-                             item.business_unit_id === 3 ? '🇨🇦' :
-                             item.business_unit_id === 4 ? '🇦🇪' : '🌍'}
-                          </span>
+                        {/* BU Flag */}
+                        <td style={{ padding: '10px 14px', fontSize: '20px', textAlign: 'center' as const }}>
+                          {getBUFlag(item.business_unit_id)}
                         </td>
 
                         {/* Added By */}
@@ -651,26 +812,33 @@ export default function PricesPage() {
                         </td>
 
                         {/* Date */}
-                        <td style={{ padding: '10px 14px', color: '#999', fontSize: '11px', whiteSpace: 'nowrap' as const }}>
+                        <td style={{
+                          padding: '10px 14px', color: '#aaa',
+                          fontSize: '11px', whiteSpace: 'nowrap' as const
+                        }}>
                           {formatDate(item.created_at)}
                         </td>
 
                         {/* Actions */}
-                        <td style={{ padding: '10px 14px' }} onClick={(e) => e.stopPropagation()}>
+                        <td
+                          style={{ padding: '10px 14px' }}
+                          onClick={(e) => e.stopPropagation()}>
                           <div style={{ display: 'flex', gap: '4px' }}>
                             <button
                               onClick={() => { setSelectedItem(item); setEditMode(true) }}
                               style={{
                                 background: '#E3F2FD', color: '#1565C0',
-                                border: 'none', padding: '5px 10px',
-                                borderRadius: '6px', fontSize: '12px', cursor: 'pointer'
+                                border: 'none', padding: '6px 10px',
+                                borderRadius: '6px', fontSize: '13px',
+                                cursor: 'pointer'
                               }}>✏️</button>
                             <button
                               onClick={() => handleDelete(item.id)}
                               style={{
                                 background: '#ffebee', color: '#c62828',
-                                border: 'none', padding: '5px 10px',
-                                borderRadius: '6px', fontSize: '12px', cursor: 'pointer'
+                                border: 'none', padding: '6px 10px',
+                                borderRadius: '6px', fontSize: '13px',
+                                cursor: 'pointer'
                               }}>🗑️</button>
                           </div>
                         </td>
@@ -684,7 +852,7 @@ export default function PricesPage() {
         )}
       </div>
 
-      {/* Item Detail / Edit Modal */}
+      {/* ── ITEM DETAIL / EDIT MODAL ── */}
       {selectedItem && (
         <div
           style={{
@@ -699,34 +867,48 @@ export default function PricesPage() {
           <div
             style={{
               background: 'white', borderRadius: '16px',
-              padding: '32px', width: '100%', maxWidth: '580px',
+              padding: '28px', width: '100%', maxWidth: '580px',
               maxHeight: '90vh', overflowY: 'auto',
-              boxShadow: '0 24px 64px rgba(0,0,0,0.3)'
+              boxShadow: '0 24px 64px rgba(0,0,0,0.25)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '17px', fontWeight: '600', color: '#0d2137', margin: 0 }}>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between',
+              alignItems: 'center', marginBottom: '20px'
+            }}>
+              <h2 style={{
+                fontSize: '17px', fontWeight: '600',
+                color: '#0d2137', margin: 0
+              }}>
                 {editMode ? '✏️ Edit Item' : '📋 Item Details'}
               </h2>
               <button
                 onClick={() => { setSelectedItem(null); setEditMode(false) }}
-                style={{ background: '#f0f0f0', border: 'none', width: '32px', height: '32px', borderRadius: '50%', fontSize: '16px', cursor: 'pointer', color: '#666' }}>
-                ✕
-              </button>
+                style={{
+                  background: '#f5f5f5', border: 'none',
+                  width: '32px', height: '32px', borderRadius: '50%',
+                  fontSize: '16px', cursor: 'pointer', color: '#666'
+                }}>✕</button>
             </div>
 
             {/* Image */}
             <div style={{ marginBottom: '20px' }}>
               {selectedItem.image_url ? (
                 <img src={selectedItem.image_url} alt={selectedItem.description}
-                  style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '10px' }} />
+                  style={{
+                    width: '100%', height: '200px',
+                    objectFit: 'cover', borderRadius: '10px',
+                    border: '1px solid #e0e0e0'
+                  }} />
               ) : (
                 <div style={{
-                  width: '100%', height: '100px', background: '#f5f5f5',
-                  borderRadius: '10px', display: 'flex', alignItems: 'center',
-                  justifyContent: 'center', fontSize: '40px'
+                  width: '100%', height: '100px',
+                  background: '#f5f5f5', borderRadius: '10px',
+                  display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', fontSize: '40px',
+                  border: '1px solid #e8e8e8'
                 }}>📦</div>
               )}
               {editMode && (
@@ -740,81 +922,110 @@ export default function PricesPage() {
                       }
                     }}
                     style={{ fontSize: '13px', color: '#000' }} />
-                  {uploading && <span style={{ fontSize: '12px', color: '#1565C0' }}> Uploading...</span>}
+                  {uploading && (
+                    <span style={{ fontSize: '12px', color: '#1565C0' }}> ⏳ Uploading...</span>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* View Mode */}
+            {/* VIEW MODE */}
             {!editMode ? (
               <div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '8px', marginBottom: '12px'
+                }}>
                   {[
                     { label: 'Description', value: selectedItem.description },
                     { label: 'Category', value: selectedItem.categories?.name || 'Uncategorized' },
                     { label: 'Unit', value: selectedItem.unit || '-' },
-                    { label: 'Unit Price', value: `₱${parseFloat(selectedItem.base_price).toLocaleString()}` },
+                    { label: 'Unit Price (PHP)', value: `₱${parseFloat(selectedItem.base_price).toLocaleString()}` },
                     { label: 'Supplier', value: selectedItem.supplier || '-' },
                     { label: 'Contact', value: selectedItem.supplier_contact || '-' },
                     { label: 'Notes', value: selectedItem.notes || '-' },
-                    { label: 'Business Unit', value: selectedItem.business_unit_id === 1 ? '🇵🇭 Philippines' : selectedItem.business_unit_id === 2 ? '🇸🇦 KSA' : selectedItem.business_unit_id === 3 ? '🇨🇦 Canada' : '🇦🇪 Middle East' },
+                    { label: 'Business Unit', value: `${getBUFlag(selectedItem.business_unit_id)} ${businessUnits.find(b => b.id === selectedItem.business_unit_id)?.label.split(' ').slice(1).join(' ') || 'Philippines'}` },
                   ].map(field => (
-                    <div key={field.label} style={{ background: '#f8f9fa', borderRadius: '8px', padding: '10px 12px' }}>
-                      <div style={{ fontSize: '10px', color: '#999', marginBottom: '3px', fontWeight: '600', textTransform: 'uppercase' as const }}>
+                    <div key={field.label} style={{
+                      background: '#f8f9fa', borderRadius: '8px',
+                      padding: '10px 12px'
+                    }}>
+                      <div style={{
+                        fontSize: '10px', color: '#999',
+                        marginBottom: '3px', fontWeight: '700',
+                        textTransform: 'uppercase' as const,
+                        letterSpacing: '0.5px'
+                      }}>
                         {field.label}
                       </div>
-                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#0d2137' }}>{field.value}</div>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#0d2137' }}>
+                        {field.value}
+                      </div>
                     </div>
                   ))}
                 </div>
 
                 {selectedItem.full_description && (
-                  <div style={{ background: '#f8f9fa', borderRadius: '8px', padding: '12px', marginBottom: '12px' }}>
-                    <div style={{ fontSize: '10px', color: '#999', marginBottom: '4px', fontWeight: '600', textTransform: 'uppercase' as const }}>
-                      Full Description
-                    </div>
-                    <div style={{ fontSize: '13px', color: '#333', lineHeight: '1.6' }}>
+                  <div style={{
+                    background: '#f8f9fa', borderRadius: '8px',
+                    padding: '12px', marginBottom: '12px'
+                  }}>
+                    <div style={{
+                      fontSize: '10px', color: '#999',
+                      marginBottom: '6px', fontWeight: '700',
+                      textTransform: 'uppercase' as const
+                    }}>Full Description</div>
+                    <div style={{ fontSize: '13px', color: '#333', lineHeight: '1.7' }}>
                       {selectedItem.full_description}
                     </div>
                   </div>
                 )}
 
-                {/* Who added */}
+                {/* Added by / edited by */}
                 <div style={{
                   background: '#E8F5E9', borderRadius: '8px',
-                  padding: '12px 14px', fontSize: '12px', color: '#2E7D32',
-                  marginBottom: '16px'
+                  padding: '12px 14px', fontSize: '12px',
+                  color: '#2E7D32', marginBottom: '16px',
+                  lineHeight: '1.8'
                 }}>
                   <div>
-                    👤 <strong>Added by:</strong> {selectedItem.creator?.full_name || 'Unknown'} — {formatDate(selectedItem.created_at)}
+                    👤 <strong>Added by:</strong>{' '}
+                    {selectedItem.creator?.full_name || 'Unknown'} —{' '}
+                    {formatDate(selectedItem.created_at)}
                   </div>
                   {selectedItem.editor?.full_name && (
-                    <div style={{ marginTop: '4px' }}>
-                      ✏️ <strong>Last edited by:</strong> {selectedItem.editor?.full_name} — {formatDate(selectedItem.updated_at)}
+                    <div>
+                      ✏️ <strong>Last edited by:</strong>{' '}
+                      {selectedItem.editor?.full_name} —{' '}
+                      {formatDate(selectedItem.updated_at)}
                     </div>
                   )}
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={() => setEditMode(true)} style={{
-                    background: '#1565C0', color: 'white', border: 'none',
-                    padding: '10px 20px', borderRadius: '8px',
-                    fontSize: '13px', fontWeight: '600', cursor: 'pointer'
+                    background: '#1565C0', color: 'white',
+                    border: 'none', padding: '10px 20px',
+                    borderRadius: '8px', fontSize: '13px',
+                    fontWeight: '600', cursor: 'pointer'
                   }}>✏️ Edit Item</button>
                   <button onClick={() => handleDelete(selectedItem.id)} style={{
-                    background: '#ffebee', color: '#c62828', border: 'none',
-                    padding: '10px 20px', borderRadius: '8px',
-                    fontSize: '13px', cursor: 'pointer'
+                    background: '#ffebee', color: '#c62828',
+                    border: 'none', padding: '10px 20px',
+                    borderRadius: '8px', fontSize: '13px',
+                    cursor: 'pointer'
                   }}>🗑️ Delete</button>
                   <button onClick={() => setSelectedItem(null)} style={{
-                    background: '#f0f0f0', color: '#333', border: 'none',
-                    padding: '10px 20px', borderRadius: '8px',
-                    fontSize: '13px', cursor: 'pointer', marginLeft: 'auto'
+                    background: '#f0f0f0', color: '#333',
+                    border: 'none', padding: '10px 20px',
+                    borderRadius: '8px', fontSize: '13px',
+                    cursor: 'pointer', marginLeft: 'auto'
                   }}>Close</button>
                 </div>
               </div>
             ) : (
-              /* Edit Mode */
+              /* EDIT MODE */
               <div>
                 <div style={{ display: 'grid', gap: '10px', marginBottom: '16px' }}>
                   {[
@@ -826,7 +1037,10 @@ export default function PricesPage() {
                     { label: 'Notes', key: 'notes' },
                   ].map(field => (
                     <div key={field.key}>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#333', marginBottom: '4px' }}>
+                      <label style={{
+                        display: 'block', fontSize: '12px',
+                        fontWeight: '600', color: '#333', marginBottom: '4px'
+                      }}>
                         {field.label}
                       </label>
                       <input
@@ -839,7 +1053,10 @@ export default function PricesPage() {
                   ))}
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#333', marginBottom: '4px' }}>
+                    <label style={{
+                      display: 'block', fontSize: '12px',
+                      fontWeight: '600', color: '#333', marginBottom: '4px'
+                    }}>
                       Category
                     </label>
                     <select
@@ -854,7 +1071,10 @@ export default function PricesPage() {
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#333', marginBottom: '4px' }}>
+                    <label style={{
+                      display: 'block', fontSize: '12px',
+                      fontWeight: '600', color: '#333', marginBottom: '4px'
+                    }}>
                       Full Description
                     </label>
                     <textarea
@@ -868,14 +1088,15 @@ export default function PricesPage() {
 
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={handleEditSave} disabled={saving} style={{
-                    background: '#1565C0', color: 'white', border: 'none',
+                    background: saving ? '#90CAF9' : '#1565C0',
+                    color: 'white', border: 'none',
                     padding: '10px 24px', borderRadius: '8px',
                     fontSize: '13px', fontWeight: '600', cursor: 'pointer'
-                  }}>{saving ? 'Saving...' : '💾 Save Changes'}</button>
+                  }}>{saving ? '⏳ Saving...' : '💾 Save Changes'}</button>
                   <button onClick={() => setEditMode(false)} style={{
-                    background: '#f0f0f0', color: '#333', border: 'none',
-                    padding: '10px 20px', borderRadius: '8px',
-                    fontSize: '13px', cursor: 'pointer'
+                    background: '#f0f0f0', color: '#333',
+                    border: 'none', padding: '10px 20px',
+                    borderRadius: '8px', fontSize: '13px', cursor: 'pointer'
                   }}>Cancel</button>
                 </div>
               </div>
