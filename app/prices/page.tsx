@@ -77,12 +77,19 @@ export default function PricesPage() {
   const fetchData = async () => {
     setLoading(true)
     const { data: cats } = await supabase
-      .from('categories').select('*').order('name')
+  .from('categories').select('id, name, icon').order('id')
     setCategories(cats || [])
-    const { data: itms } = await supabase
-      .from('items')
-      .select(`*, categories(name), creator:profiles!items_created_by_fkey(full_name), editor:profiles!items_updated_by_fkey(full_name)`)
-      .order('created_at', { ascending: false })
+   const { data: itms, error: itemsError } = await supabase
+  .from('items')
+  .select('id, description, full_description, category_id, unit, base_price, base_currency, supplier, supplier_contact, business_unit_id, notes, image_url, created_by, updated_by, created_at, updated_at, categories(name)')
+  .order('id', { ascending: false })
+
+if (itemsError) {
+  console.error('Items fetch error:', itemsError.message)
+} else {
+  console.log('Items loaded:', itms?.length)
+}
+setItems(itms || [])
     setItems(itms || [])
     setLoading(false)
   }
