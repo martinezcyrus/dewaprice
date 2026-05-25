@@ -79,18 +79,38 @@ export default function PricesPage() {
     const { data: cats } = await supabase
   .from('categories').select('id, name, icon').order('id')
     setCategories(cats || [])
-   const { data: itms, error: itemsError } = await supabase
+  const { data: itms, error: itemsError } = await supabase
   .from('items')
   .select('id, description, full_description, category_id, unit, base_price, base_currency, supplier, supplier_contact, business_unit_id, notes, image_url, created_by, updated_by, created_at, updated_at, categories(name)')
   .order('id', { ascending: false })
 
 if (itemsError) {
   console.error('Items fetch error:', itemsError.message)
-} else {
-  console.log('Items loaded:', itms?.length)
+  setItems([])
+  setLoading(false)
+  return
 }
-setItems(itms || [])
-    setItems(itms || [])
+
+// Fetch creator names separately
+const itemsWithCreators = await Promise.all((itms || []).map(async (item) => {
+  let creator = null
+  let editor = null
+  if (item.created_by) {
+    const { data: c } = await supabase
+      .from('profiles').select('full_name')
+      .eq('id', item.created_by).single()
+    creator = c
+  }
+  if (item.updated_by && item.updated_by !== item.created_by) {
+    const { data: e } = await supabase
+      .from('profiles').select('full_name')
+      .eq('id', item.updated_by).single()
+    editor = e
+  }
+  return { ...item, creator, editor }
+}))
+
+setItems(itemsWithCreators)
     setLoading(false)
   }
 
