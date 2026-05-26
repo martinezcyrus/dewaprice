@@ -21,17 +21,18 @@ export default function PricesPage() {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [newItem, setNewItem] = useState({
-    description: '',
-    full_description: '',
-    category_id: '',
-    unit: '',
-    base_price: '',
-    supplier: '',
-    supplier_contact: '',
-    notes: '',
-    image_url: '',
-    business_unit_id: '1'
-  })
+  description: '',
+  full_description: '',
+  category_id: '',
+  unit: '',
+  base_price: '',
+  supplier: '',
+  supplier_contact: '',
+  notes: '',
+  image_url: '',
+  business_unit_id: '1',
+  method_tags: [] as string[]
+})
 
   const tabs = [
     { id: 'philippines', label: '🇵🇭 Philippines', active: true },
@@ -133,21 +134,22 @@ setItems(itemsWithCreators)
       return
     }
     setSaving(true)
-    const { error } = await supabase.from('items').insert([{
-      description: newItem.description,
-      full_description: newItem.full_description,
-      category_id: newItem.category_id || null,
-      unit: newItem.unit,
-      base_price: parseFloat(newItem.base_price),
-      base_currency: 'PHP',
-      supplier: newItem.supplier,
-      supplier_contact: newItem.supplier_contact,
-      notes: newItem.notes,
-      image_url: newItem.image_url,
-      business_unit_id: parseInt(newItem.business_unit_id) || 1,
-      created_by: userId,
-      updated_by: userId
-    }])
+  const { error } = await supabase.from('items').insert([{
+  description: newItem.description,
+  full_description: newItem.full_description,
+  category_id: newItem.category_id || null,
+  unit: newItem.unit,
+  base_price: parseFloat(newItem.base_price),
+  base_currency: 'PHP',
+  supplier: newItem.supplier,
+  supplier_contact: newItem.supplier_contact,
+  notes: newItem.notes,
+  image_url: newItem.image_url,
+  business_unit_id: parseInt(newItem.business_unit_id) || 1,
+  method_tags: newItem.method_tags,
+  created_by: userId,
+  updated_by: userId
+}])
     if (error) { alert('Error: ' + error.message) }
     else {
       setShowAddForm(false)
@@ -380,6 +382,54 @@ setItems(itemsWithCreators)
                       <option value='new'>➕ Add new BU...</option>
                     </select>
                   </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#333', marginBottom: '8px' }}>
+    Applicable Dewatering Methods
+    <span style={{ color: '#999', fontWeight: '400', marginLeft: '6px' }}>
+      (select all that apply — helps the estimator find the right prices)
+    </span>
+  </label>
+  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
+    {[
+      { id: 'wellpoint', label: '💧 Wellpoint System', color: '#1565C0' },
+      { id: 'deepwell', label: '🕳️ Deep Wells', color: '#2E7D32' },
+      { id: 'eductor', label: '🌀 Eductor Wells', color: '#E65100' },
+      { id: 'sump', label: '🪣 Sump Pumping', color: '#6A1B9A' },
+      { id: 'open cut', label: '⛏️ Open Cut', color: '#00695C' },
+      { id: 'general', label: '🔧 General / All Methods', color: '#555' },
+    ].map(method => {
+      const selected = (newItem.method_tags || []).includes(method.id)
+      return (
+        <div
+          key={method.id}
+          onClick={() => {
+            const current = newItem.method_tags || []
+            const updated = selected
+              ? current.filter((t: string) => t !== method.id)
+              : [...current, method.id]
+            setNewItem({ ...newItem, method_tags: updated })
+          }}
+          style={{
+            padding: '6px 14px',
+            borderRadius: '99px',
+            border: `1.5px solid ${selected ? method.color : '#e0e0e0'}`,
+            background: selected ? `${method.color}15` : 'white',
+            color: selected ? method.color : '#666',
+            fontSize: '12px', fontWeight: selected ? '600' : '400',
+            cursor: 'pointer', transition: 'all 0.15s',
+            userSelect: 'none' as const
+          }}>
+          {method.label}
+        </div>
+      )
+    })}
+  </div>
+  {(newItem.method_tags || []).length === 0 && (
+    <div style={{ fontSize: '11px', color: '#ff9800', marginTop: '6px' }}>
+      ⚠️ No method selected — this item won't appear in estimator equipment schedules
+    </div>
+  )}
+</div>
 
                   <div style={{ gridColumn: '1 / -1' }}>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#333', marginBottom: '4px' }}>
@@ -724,7 +774,7 @@ setItems(itemsWithCreators)
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                   <thead>
                     <tr style={{ background: '#f8f9fa' }}>
-                      {['', 'Category', 'Description', 'Unit', 'Unit Price (PHP)', 'Supplier', 'BU', 'Added by', 'Date', 'Actions'].map(h => (
+                      {['', 'Category', 'Description', 'Unit', 'Unit Price (PHP)', 'Supplier', 'Methods', 'BU', 'Added by', 'Date', 'Actions'].map(h => (
                         <th key={h} style={{
                           padding: '12px 14px', textAlign: 'left',
                           fontWeight: '700', color: '#555',
@@ -827,6 +877,36 @@ setItems(itemsWithCreators)
                             {item.supplier || '-'}
                           </div>
                         </td>
+                        {/* Method Tags */}
+<td style={{ padding: '10px 14px' }}>
+  <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' as const }}>
+    {(item.method_tags || []).length === 0 ? (
+      <span style={{ fontSize: '10px', color: '#ccc' }}>—</span>
+    ) : (item.method_tags || []).map((tag: string) => {
+      const colors: Record<string, string> = {
+        wellpoint: '#1565C0', deepwell: '#2E7D32',
+        eductor: '#E65100', sump: '#6A1B9A',
+        'open cut': '#00695C', general: '#555'
+      }
+      const labels: Record<string, string> = {
+        wellpoint: 'WP', deepwell: 'DW',
+        eductor: 'ED', sump: 'SP',
+        'open cut': 'OC', general: 'GEN'
+      }
+      return (
+        <span key={tag} style={{
+          fontSize: '10px', fontWeight: '700',
+          padding: '2px 5px', borderRadius: '4px',
+          background: `${colors[tag] || '#555'}15`,
+          color: colors[tag] || '#555',
+          border: `1px solid ${colors[tag] || '#555'}33`
+        }}>
+          {labels[tag] || tag.toUpperCase()}
+        </span>
+      )
+    })}
+  </div>
+</td>
 
                         {/* BU Flag */}
                         <td style={{ padding: '10px 14px', fontSize: '20px', textAlign: 'center' as const }}>
