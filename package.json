@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "xlsx": "^0.18.5",
     "@supabase/supabase-js": "^2.106.1",
     "@types/node": "20.6.2",
     "@types/react": "18.2.22",
