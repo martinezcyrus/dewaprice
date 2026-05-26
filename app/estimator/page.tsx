@@ -107,6 +107,7 @@ export default function EstimatorPage() {
   const [dbPrices, setDbPrices] = useState<any[]>([])
   const [savedEstimates, setSavedEstimates] = useState<any[]>([])
   const [saving, setSaving] = useState(false)
+  const [showSaved, setShowSaved] = useState(false)
   const [userId, setUserId] = useState('')
 
   useEffect(() => {
@@ -344,18 +345,28 @@ export default function EstimatorPage() {
     setCalculating(false)
   }
 
-  const handleSave = async () => {
-    if (!results) return
-    setSaving(true)
-    await supabase.from('estimates').insert([{
-      user_id: userId,
-      project_name: inputs.projectName || 'Unnamed project',
-      input_data: inputs,
-      result_data: results,
-    }])
-    setSaving(false)
-    alert('Estimate saved successfully!')
-  }
+ const handleSave = async () => {
+  if (!results) return
+  setSaving(true)
+  const { data: saved } = await supabase.from('estimates').insert([{
+    user_id: userId,
+    project_name: inputs.projectName || 'Unnamed project',
+    input_data: inputs,
+    result_data: results,
+  }]).select()
+
+  // Refresh saved estimates list
+  const { data: estimates } = await supabase
+    .from('estimates')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(10)
+  setSavedEstimates(estimates || [])
+  setSaving(false)
+  setShowSaved(true)
+  alert(`✅ Estimate saved! Click "My Saved Estimates" to view all saved projects.`)
+}
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 14px',
@@ -384,15 +395,139 @@ export default function EstimatorPage() {
     <div style={{ minHeight: '100vh', background: '#f0f4f8', fontFamily: 'Arial, sans-serif' }}>
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '28px 24px' }}>
 
-        {/* ── PAGE HEADER ── */}
-        <div style={{ marginBottom: '28px' }}>
-          <h1 style={{ fontSize: '22px', fontWeight: '600', color: '#0d2137', margin: '0 0 4px 0' }}>
-            🏗️ Dewatering Estimator
-          </h1>
-          <p style={{ color: '#666', fontSize: '13px', margin: 0 }}>
-            Input site parameters to get method recommendation, hydraulic calculations, and cost estimate
-          </p>
-        </div>
+       {/* ── PAGE HEADER ── */}
+<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px', flexWrap: 'wrap' as const, gap: '12px' }}>
+  <div>
+    <h1 style={{ fontSize: '22px', fontWeight: '600', color: '#0d2137', margin: '0 0 4px 0' }}>
+      🏗️ Dewatering Estimator
+    </h1>
+    <p style={{ color: '#666', fontSize: '13px', margin: 0 }}>
+      Input site parameters to get method recommendation, hydraulic calculations, and cost estimate
+    </p>
+  </div>
+  {savedEstimates.length > 0 && (
+    <button
+      onClick={() => setShowSaved(!showSaved)}
+      style={{
+        padding: '10px 16px',
+        background: showSaved ? '#1565C0' : 'white',
+        color: showSaved ? 'white' : '#1565C0',
+        border: '1.5px solid #1565C0',
+        borderRadius: '8px', fontSize: '13px',
+        fontWeight: '600', cursor: 'pointer'
+      }}>
+      📂 My Saved Estimates ({savedEstimates.length})
+    </button>
+  )}
+</div>
+
+{/* ── SAVED ESTIMATES PANEL ── */}
+{showSaved && savedEstimates.length > 0 && (
+  <div style={{
+    ...sectionStyle,
+    marginBottom: '24px',
+    border: '1.5px solid #1565C0'
+  }}>
+    <h2 style={{ fontSize: '15px', fontWeight: '600', color: '#0d2137', margin: '0 0 16px 0' }}>
+      📂 Saved Estimates
+    </h2>
+    <div style={{ display: 'grid', gap: '10px' }}>
+      {savedEstimates.map((est: any) => {
+        const result = est.result_data
+        const input = est.input_data
+        const color = METHOD_COLORS[result?.method] || '#1565C0'
+        return (
+          <div
+            key={est.id}
+            style={{
+              display: 'flex', alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '14px 16px',
+              background: '#f8f9fa',
+              borderRadius: '10px',
+              border: `1px solid #e0e0e0`,
+              flexWrap: 'wrap' as const, gap: '10px'
+            }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '40px', height: '40px',
+                background: `${color}15`,
+                border: `2px solid ${color}44`,
+                borderRadius: '8px',
+                display: 'flex', alignItems: 'center',
+                justifyContent: 'center', fontSize: '18px'
+              }}>🏗️</div>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: '600', color: '#0d2137' }}>
+                  {est.project_name || 'Unnamed Project'}
+                </div>
+                <div style={{ fontSize: '12px', color: '#999', marginTop: '2px' }}>
+                  <span style={{
+                    background: `${color}15`, color,
+                    padding: '1px 6px', borderRadius: '99px',
+                    fontWeight: '600', marginRight: '8px'
+                  }}>{result?.method}</span>
+                  {input?.location && `📍 ${input.location} · `}
+                  {input?.excavationLength}m × {input?.excavationWidth}m × {input?.excavationDepth}m deep
+                </div>
+                <div style={{ fontSize: '11px', color: '#bbb', marginTop: '2px' }}>
+                  Saved {new Date(est.created_at).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ textAlign: 'right' as const }}>
+                <div style={{ fontSize: '11px', color: '#999' }}>Cost Price</div>
+                <div style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>
+                  ₱{(result?.totalCostPrice || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' as const }}>
+                <div style={{ fontSize: '11px', color: '#999' }}>Selling Price</div>
+                <div style={{ fontSize: '14px', fontWeight: '700', color }}>
+                  ₱{(result?.totalSellingPrice || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  onClick={() => {
+                    setInputs(input)
+                    setResults(result)
+                    setSelectedMethod(result?.method)
+                    setStep(3)
+                    setShowSaved(false)
+                  }}
+                  style={{
+                    padding: '7px 14px',
+                    background: color, color: 'white',
+                    border: 'none', borderRadius: '6px',
+                    fontSize: '12px', fontWeight: '600',
+                    cursor: 'pointer'
+                  }}>
+                  📂 Load
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!confirm('Delete this estimate?')) return
+                    await supabase.from('estimates').delete().eq('id', est.id)
+                    setSavedEstimates(savedEstimates.filter((e: any) => e.id !== est.id))
+                  }}
+                  style={{
+                    padding: '7px 10px',
+                    background: '#ffebee', color: '#c62828',
+                    border: 'none', borderRadius: '6px',
+                    fontSize: '12px', cursor: 'pointer'
+                  }}>
+                  🗑️
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  </div>
+)}
 
         {/* ── STEP INDICATOR ── */}
         <div style={{
