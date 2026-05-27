@@ -1,19 +1,13 @@
-'use client'
-import { useEffect } from 'react'
+import { createClient } from './lib/server'
+import { redirect } from 'next/navigation'
 
-export default function Home() {
-  useEffect(() => {
-    window.location.href = '/login'
-  }, [])
+export default async function Home() {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  return (
-    <div style={{
-      minHeight: '100vh', background: '#0f2027',
-      display: 'flex', alignItems: 'center',
-      justifyContent: 'center', color: 'white',
-      fontFamily: 'Arial, sans-serif'
-    }}>
-      Redirecting...
-    </div>
-  )
+  if (user) {
+    redirect('/dashboard')
+  } else {
+    redirect('/login')
+  }
 }

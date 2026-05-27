@@ -1,58 +1,84 @@
 'use client'
-import { useState } from 'react'
-import { supabase } from '../lib/supabase'
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '../lib/client'
+
+export default function DemoPage() {
+  const router = useRouter()
   const [error, setError] = useState('')
+  const supabase = createClient()
 
-  const handleLogin = async () => {
-    setLoading(true)
-    setError('')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-      return
+  useEffect(() => {
+    const autoLogin = async () => {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: 'guest@dewaprice.app',
+        password: 'DemoGuest2024!',
+      })
+
+      if (error) {
+        setError('Demo account unavailable. Please contact the admin.')
+        return
+      }
+
+      router.refresh()
+      router.push('/dashboard')
     }
-    window.location.href = '/dashboard'
-  }
+
+    autoLogin()
+  }, [])
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0f2027, #203a43, #2c5364)' }}>
-      <div style={{ background: 'white', borderRadius: '16px', padding: '48px', width: '100%', maxWidth: '400px', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '8px' }}>💧</div>
-          <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#0d2137', margin: '0 0 4px 0' }}>DewaPrice</h1>
-          <p style={{ color: '#666', fontSize: '14px', margin: '0 0 16px 0' }}>Dewatering Price & Estimator Tool</p>
-          <div style={{ width: '48px', height: '3px', background: '#1565C0', margin: '0 auto', borderRadius: '2px' }}/>
-        </div>
-        {error && (
-          <div style={{ background: '#ffebee', border: '1px solid #ffcdd2', color: '#c62828', padding: '12px 16px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px' }}>
-            ⚠️ {error}
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0f2027, #203a43, #2c5364)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <div style={{
+        background: 'white', borderRadius: '16px', padding: '48px',
+        width: '100%', maxWidth: '400px',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.3)', textAlign: 'center'
+      }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>💧</div>
+        <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0d2137', margin: '0 0 8px 0' }}>
+          DewaPrice Demo
+        </h1>
+        <p style={{ color: '#666', fontSize: '14px', margin: '0 0 24px 0' }}>
+          Logging you in as a guest...
+        </p>
+        {!error ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', color: '#1565C0' }}>
+            <div style={{
+              width: '20px', height: '20px', border: '3px solid #E3F2FD',
+              borderTop: '3px solid #1565C0', borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite'
+            }}/>
+            <span style={{ fontSize: '14px', fontWeight: '500' }}>Setting up demo access...</span>
+          </div>
+        ) : (
+          <div>
+            <div style={{
+              background: '#ffebee', border: '1px solid #ffcdd2',
+              color: '#c62828', padding: '12px 16px', borderRadius: '8px',
+              marginBottom: '16px', fontSize: '13px'
+            }}>
+              ⚠️ {error}
+            </div>
+            <a href="mailto:cyrusjaysonm@gmail.com?subject=DewaPrice Demo Access"
+              style={{
+                display: 'inline-block', padding: '12px 24px',
+                background: 'linear-gradient(135deg, #1565C0, #0288D1)',
+                color: 'white', borderRadius: '8px', fontSize: '14px',
+                fontWeight: '600', textDecoration: 'none'
+              }}>
+              📧 Contact Admin
+            </a>
           </div>
         )}
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#333', marginBottom: '6px' }}>Email address</label>
-          <input type="email" placeholder="you@example.com" value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ width: '100%', padding: '12px 16px', border: '1.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#000', boxSizing: 'border-box', outline: 'none' }}/>
-        </div>
-        <div style={{ marginBottom: '24px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#333', marginBottom: '6px' }}>Password</label>
-          <input type="password" placeholder="••••••••" value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-            style={{ width: '100%', padding: '12px 16px', border: '1.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#000', boxSizing: 'border-box', outline: 'none' }}/>
-        </div>
-        <button onClick={handleLogin} disabled={loading}
-          style={{ width: '100%', padding: '13px', background: loading ? '#90CAF9' : 'linear-gradient(135deg, #1565C0, #0288D1)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer' }}>
-          {loading ? '⏳ Signing in...' : 'Sign in →'}
-        </button>
-        <p style={{ textAlign: 'center', fontSize: '12px', color: '#aaa', marginTop: '24px' }}>
-          🇵🇭 Philippines BU — Internal tool
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <p style={{ textAlign: 'center', fontSize: '11px', color: '#bbb', marginTop: '24px' }}>
+          👁️ Demo mode — read only · 🇵🇭 Philippines BU
         </p>
       </div>
     </div>
