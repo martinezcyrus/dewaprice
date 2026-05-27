@@ -1,4 +1,4 @@
-import { createClient } from '../lib/server'
+import { createClient } from './lib/client'
 import LayoutClient from './LayoutClient'
 import './globals.css'
 
