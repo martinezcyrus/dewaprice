@@ -113,17 +113,14 @@ export default function PricesPage() {
     init()
 
     // Re-fetch when auth state changes (e.g. after re-login)
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        setUserId(session.user.id)
-        fetchData()
-      }
-      if (event === 'SIGNED_OUT') {
-        window.location.href = '/login'
-      }
-    })
-
-    return () => listener.subscription.unsubscribe()
+    useEffect(() => {
+  supabase.auth.getSession().then(async ({ data }) => {
+    if (!data.session) { window.location.replace('/login'); return }
+    setUserId(data.session.user.id)
+    setUserEmail(data.session.user.email || '')
+    fetchData()
+  })
+}, [])
   }, [])
 
   const fetchData = async () => {
