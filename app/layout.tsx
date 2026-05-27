@@ -81,7 +81,6 @@ function DemoBanner() {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
-  const [ready, setReady] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [permissionModal, setPermissionModal] = useState<string | null>(null)
   const pathname = usePathname()
@@ -91,6 +90,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const showPermissionModal = (action = 'This action') => setPermissionModal(action)
 
   useEffect(() => {
+    // Get current session on mount
     supabase.auth.getSession().then(async ({ data }) => {
       if (data.session?.user) {
         setUser(data.session.user)
@@ -99,12 +99,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           .eq('id', data.session.user.id).single()
         setProfile(prof || null)
       }
-      setReady(true)
     })
-  }, [])
 
-  // Handle sign in/out events
-  useEffect(() => {
+    // Listen for auth changes
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         setUser(session.user)
@@ -119,26 +116,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         window.location.href = '/login'
       }
     })
+
     return () => listener.subscription.unsubscribe()
   }, [])
 
-  // Pages that don't need the navbar/sidebar
   const noLayoutPages = ['/login', '/demo']
   const onPublicPage = noLayoutPages.includes(pathname)
 
-  // Still loading — show nothing to avoid flash
-  if (!ready) return (
-    <html lang="en">
-      <body style={{ margin: 0, background: '#0d2137', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', color: 'white', fontFamily: 'Arial' }}>
-          <div style={{ fontSize: '48px', marginBottom: '12px' }}>💧</div>
-          <div style={{ fontSize: '16px', opacity: 0.7 }}>Loading DewaPrice...</div>
-        </div>
-      </body>
-    </html>
-  )
-
-  // Login / Demo pages — no navbar
+  // Public pages (login/demo) — always render without navbar
   if (onPublicPage) return (
     <html lang="en">
       <body style={{ margin: 0, fontFamily: 'Arial, sans-serif' }}>
@@ -149,15 +134,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   )
 
-  // Not logged in and not on a public page — go to login
-  if (!user) {
-    if (typeof window !== 'undefined') window.location.href = '/login'
-    return (
-      <html lang="en">
-        <body style={{ margin: 0, background: '#0d2137', minHeight: '100vh' }}/>
-      </html>
-    )
-  }
+  // Not logged in on a protected page — render children anyway
+  // (each page handles its own auth redirect)
+  if (!user) return (
+    <html lang="en">
+      <body style={{ margin: 0, fontFamily: 'Arial, sans-serif' }}>
+        <GuestContext.Provider value={{ isGuest, isAdmin, showPermissionModal }}>
+          {children}
+        </GuestContext.Provider>
+      </body>
+    </html>
+  )
 
   const navLinks = [
     { href: '/dashboard', label: '📊 Dashboard' },
@@ -238,10 +225,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   ))}
                 </div>
                 {!isGuest ? (
-                  <button
-                    onClick={async () => {
-                      await supabase.auth.signOut()
-                    }}
+                  <button onClick={async () => { await supabase.auth.signOut() }}
                     style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.15)', padding: '10px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', width: '100%' }}>
                     🚪 Sign Out
                   </button>
