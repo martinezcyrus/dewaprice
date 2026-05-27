@@ -173,7 +173,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   )
 
-  if (!showLayout) return (
+  if (!showLayout) {
+  // If no user and not on login/demo page, redirect to login
+  if (!user && !noLayoutPages.includes(pathname) && typeof window !== 'undefined') {
+    window.location.href = '/login'
+    return null
+  }
+  return (
     <html lang="en">
       <body style={{ margin: 0, fontFamily: 'Arial, sans-serif' }}>
         <GuestContext.Provider value={{ isGuest: false, isAdmin: false, showPermissionModal }}>
@@ -182,6 +188,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </body>
     </html>
   )
+}
 
   const navLinks = [
     { href: '/dashboard', label: '📊 Dashboard' },
