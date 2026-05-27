@@ -9,23 +9,14 @@ export default function DemoPage() {
 
   useEffect(() => {
     const loginAsGuest = async () => {
-      // Sign out any existing session first
       await supabase.auth.signOut()
-
       const { error } = await supabase.auth.signInWithPassword({
         email: 'guest@dewaprice.app',
         password: 'DemoGuest2024!',
       })
-
-      if (error) {
-        setError(error.message)
-        setStatus('error')
-        return
-      }
-
+      if (error) { setError(error.message); setStatus('error'); return }
       window.location.href = '/dashboard'
     }
-
     loginAsGuest()
   }, [])
 
@@ -37,9 +28,8 @@ export default function DemoPage() {
       fontFamily: 'Arial, sans-serif'
     }}>
       <div style={{
-        background: 'white', borderRadius: '16px',
-        padding: '48px', textAlign: 'center',
-        boxShadow: '0 24px 64px rgba(0,0,0,0.3)',
+        background: 'white', borderRadius: '16px', padding: '48px',
+        textAlign: 'center', boxShadow: '0 24px 64px rgba(0,0,0,0.3)',
         maxWidth: '400px', width: '90%'
       }}>
         {status === 'loading' ? (
@@ -57,6 +47,9 @@ export default function DemoPage() {
               animation: 'spin 1s linear infinite', margin: '0 auto'
             }}/>
             <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+            <p style={{ color: '#bbb', fontSize: '12px', marginTop: '24px' }}>
+              You will be redirected automatically
+            </p>
           </>
         ) : (
           <>
