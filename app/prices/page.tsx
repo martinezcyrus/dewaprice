@@ -101,13 +101,29 @@ export default function PricesPage() {
     boxSizing: 'border-box', outline: 'none'
   }
 
-  useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!data.session) { window.location.href = '/login'; return }
-      setUserId(data.session.user.id)
-      setUserEmail(data.session.user.email || '')
-      fetchData()
+ useEffect(() => {
+    const init = async () => {
+      // Always get fresh session
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { window.location.href = '/login'; return }
+      setUserId(session.user.id)
+      setUserEmail(session.user.email || '')
+      await fetchData()
+    }
+    init()
+
+    // Re-fetch when auth state changes (e.g. after re-login)
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        setUserId(session.user.id)
+        fetchData()
+      }
+      if (event === 'SIGNED_OUT') {
+        window.location.href = '/login'
+      }
     })
+
+    return () => listener.subscription.unsubscribe()
   }, [])
 
   const fetchData = async () => {
