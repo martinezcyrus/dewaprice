@@ -17,7 +17,7 @@ export default function LoginPage() {
       setLoading(false)
       return
     }
-    window.location.href = '/dashboard'
+    window.location.replace('/dashboard')
   }
 
   return (
