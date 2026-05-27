@@ -1,6 +1,5 @@
 'use client';
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 export default function LoginPage() {
@@ -8,18 +7,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  useEffect(() => {
-  supabase.auth.signOut()
-}, [])
 
   const handleLogin = async () => {
     setLoading(true);
     setError('');
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    // Sign out any existing session first (clears guest session)
+    await supabase.auth.signOut();
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       setError(error.message);
@@ -31,68 +27,53 @@ export default function LoginPage() {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center"
-      style={{
-        background: 'linear-gradient(135deg, #0f2027, #203a43, #2c5364)',
-      }}
-    >
-      <div className="bg-white rounded-2xl p-12 w-full max-w-md shadow-2xl">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-2">💧</div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">DewaPrice</h1>
-          <p className="text-gray-500 text-sm">
-            Dewatering Price & Estimator Tool
-          </p>
-          <div className="w-12 h-1 bg-blue-500 mx-auto mt-4 rounded" />
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0f2027, #203a43, #2c5364)' }}>
+      <div style={{ background: 'white', borderRadius: '16px', padding: '48px', width: '100%', maxWidth: '400px', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
+
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '8px' }}>💧</div>
+          <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#0d2137', margin: '0 0 4px 0' }}>DewaPrice</h1>
+          <p style={{ color: '#666', fontSize: '14px', margin: '0 0 16px 0' }}>Dewatering Price & Estimator Tool</p>
+          <div style={{ width: '48px', height: '3px', background: '#1565C0', margin: '0 auto', borderRadius: '2px' }}/>
         </div>
 
-        {/* Error */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-5 text-sm">
+          <div style={{ background: '#ffebee', border: '1px solid #ffcdd2', color: '#c62828', padding: '12px 16px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px' }}>
             ⚠️ {error}
           </div>
         )}
 
-        {/* Email */}
-        <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Email address
-          </label>
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#333', marginBottom: '6px' }}>Email address</label>
           <input
             type="email"
             placeholder="you@example.com"
-            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none"
+            value={email}
             onChange={(e) => setEmail(e.target.value)}
+            style={{ width: '100%', padding: '12px 16px', border: '1.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#000', boxSizing: 'border-box', outline: 'none' }}
           />
         </div>
 
-        {/* Password */}
-        <div className="mb-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Password
-          </label>
+        <div style={{ marginBottom: '24px' }}>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#333', marginBottom: '6px' }}>Password</label>
           <input
             type="password"
             placeholder="••••••••"
-            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none"
+            value={password}
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+            style={{ width: '100%', padding: '12px 16px', border: '1.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#000', boxSizing: 'border-box', outline: 'none' }}
           />
         </div>
 
-        {/* Button */}
         <button
           onClick={handleLogin}
           disabled={loading}
-          className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-sm transition-colors disabled:opacity-50"
-        >
-          {loading ? 'Signing in...' : 'Sign in →'}
+          style={{ width: '100%', padding: '13px', background: loading ? '#90CAF9' : 'linear-gradient(135deg, #1565C0, #0288D1)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer' }}>
+          {loading ? '⏳ Signing in...' : 'Sign in →'}
         </button>
 
-        {/* Footer */}
-        <p className="text-center text-xs text-gray-400 mt-6">
+        <p style={{ textAlign: 'center', fontSize: '12px', color: '#aaa', marginTop: '24px' }}>
           🇵🇭 Philippines BU — Internal tool
         </p>
       </div>
