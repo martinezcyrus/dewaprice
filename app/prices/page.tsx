@@ -121,7 +121,6 @@ export default function PricesPage() {
     fetchData()
   })
 }, [])
-  }, [])
 
   const fetchData = async () => {
     setLoading(true)
