@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '../../lib/client'
+import { createClient } from '../lib/client'
 
 const METHODS = [
   { id: 'wellpoint', label: 'Wellpoint System', short: 'WP', color: '#1565C0', icon: '💧' },
