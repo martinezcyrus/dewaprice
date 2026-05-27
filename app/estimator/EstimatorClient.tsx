@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '../../lib/client'
+import { createClient } from '../lib/client'
 
 // ── TYPES ──
 interface SiteInputs {
