@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useGuest } from '../layout'
 
 const METHODS = [
   { id: 'wellpoint', label: 'Wellpoint System', short: 'WP', color: '#1565C0', icon: '💧' },
@@ -81,6 +82,7 @@ export default function PricesPage() {
   const [editMode, setEditMode] = useState(false)
   const [activeTab, setActiveTab] = useState('philippines')
   const [saving, setSaving] = useState(false)
+  const { isGuest, showPermissionModal } = useGuest()
   const [uploading, setUploading] = useState(false)
   const [newItem, setNewItem] = useState({
     description: '', full_description: '',
@@ -255,8 +257,11 @@ export default function PricesPage() {
               {items.length} items · Click any row to view details, edit, or assign methods
             </p>
           </div>
-          <button onClick={() => setShowAddForm(!showAddForm)} style={{
-            background: showAddForm ? '#e0e0e0' : 'linear-gradient(135deg, #1565C0, #0288D1)',
+          <button onClick={() => {
+  if (isGuest) { showPermissionModal('Adding items'); return }
+  setShowAddForm(!showAddForm)
+}} style={{
+  background: showAddForm ? '#e0e0e0' : 'linear-gradient(135deg, #1565C0, #0288D1)',
             color: showAddForm ? '#333' : 'white', border: 'none',
             padding: '10px 20px', borderRadius: '8px',
             fontSize: '14px', fontWeight: '600', cursor: 'pointer'
@@ -616,7 +621,10 @@ export default function PricesPage() {
                           <div style={{ display: 'flex', gap: '4px' }}>
                             <button onClick={() => { setSelectedItem(item); setEditMode(true) }}
                               style={{ background: '#E3F2FD', color: '#1565C0', border: 'none', padding: '6px 10px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>✏️</button>
-                            <button onClick={() => handleDelete(item.id)}
+                            <button onClick={() => {
+  if (isGuest) { showPermissionModal('Deleting items'); return }
+  handleDelete(item.id)
+}}
                               style={{ background: '#ffebee', color: '#c62828', border: 'none', padding: '6px 10px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>🗑️</button>
                           </div>
                         </td>
