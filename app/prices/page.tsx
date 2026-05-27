@@ -83,22 +83,15 @@ export default function PricesPage() {
   }
 
   useEffect(() => {
-  const init = async () => {
-    let { data } = await supabase.auth.getSession()
-    
-    // If no session, wait 1 second and try again
-    if (!data.session) {
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      const retry = await supabase.auth.getSession()
-      data = retry.data
+  supabase.auth.getSession().then(({ data }) => {
+    if (data.session) {
+      setUserId(data.session.user.id)
+      setUserEmail(data.session.user.email || '')
+      fetchData()
+    } else {
+      setLoading(false)
     }
-
-    if (!data.session) { window.location.replace('/login'); return }
-    setUserId(data.session.user.id)
-    setUserEmail(data.session.user.email || '')
-    fetchData()
-  }
-  init()
+  })
 }, [])
 
   const fetchData = async () => {
