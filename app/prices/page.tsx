@@ -113,7 +113,7 @@ export default function PricesPage() {
     init()
 
     // Re-fetch when auth state changes (e.g. after re-login)
-    useEffect(() => {
+   useEffect(() => {
   supabase.auth.getSession().then(async ({ data }) => {
     if (!data.session) { window.location.replace('/login'); return }
     setUserId(data.session.user.id)
@@ -121,7 +121,6 @@ export default function PricesPage() {
     fetchData()
   })
 }, [])
-[])
 
   const fetchData = async () => {
     setLoading(true)
