@@ -225,7 +225,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   ))}
                 </div>
                 {!isGuest ? (
-                  <button onClick={async () => { await supabase.auth.signOut() }}
+                  <button onClick={async () => {
+  await supabase.auth.signOut()
+  window.location.replace('/login')
+}}
                     style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.15)', padding: '10px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', width: '100%' }}>
                     🚪 Sign Out
                   </button>
