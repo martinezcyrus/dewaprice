@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '../../lib/client'
+import { createClient } from '../lib/client'
 
 const BUS = [
   { flag: '🇵🇭', name: 'Philippines', tz: 'Asia/Manila', currency: 'PHP', color: '#1565C0', active: true },
