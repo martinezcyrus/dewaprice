@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { useRouter } from 'next/navigation'
+import { createClient } from '../../lib/client'
 
 const BUS = [
   { flag: '🇵🇭', name: 'Philippines', tz: 'Asia/Manila', currency: 'PHP', color: '#1565C0', active: true },
@@ -142,37 +143,23 @@ function CurrencyCard({ flag, name, currency, color, active }: any) {
   )
 }
 
-export default function Dashboard() {
-  const [stats, setStats] = useState({ items: 0, categories: 0, suppliers: 0 })
-  const [recentItems, setRecentItems] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [userName, setUserName] = useState('')
+interface Props {
+  userName: string
+  stats: { items: number; categories: number; suppliers: number }
+  recentItems: any[]
+}
 
-  useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!data.session) { window.location.href = '/login'; return }
-      const { data: profile } = await supabase
-        .from('profiles').select('full_name')
-        .eq('id', data.session.user.id).single()
-      const fullName = profile?.full_name || ''
-      const firstName = fullName.split(' ')[0] || data.session.user.email?.split('@')[0] || 'there'
-      setUserName(firstName)
+export default function DashboardClient({ userName, stats, recentItems }: Props) {
+  const router = useRouter()
+  const supabase = createClient()
 
-      const { data: items } = await supabase
-        .from('items')
-        .select('id, description, created_at, supplier, categories(name)')
-        .order('created_at', { ascending: false })
-      const { data: cats } = await supabase.from('categories').select('id')
-      const suppliers = new Set((items || []).map((i: any) => i.supplier).filter(Boolean))
-      setStats({
-        items: items?.length || 0,
-        categories: cats?.length || 0,
-        suppliers: suppliers.size
-      })
-      setRecentItems((items || []).slice(0, 5))
-      setLoading(false)
-    })
-  }, [])
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.refresh()
+    router.push('/login')
+  }
+
+  const navigate = (href: string) => router.push(href)
 
   return (
     <div style={{
@@ -181,7 +168,7 @@ export default function Dashboard() {
     }}>
       <div style={{ padding: '28px 32px' }}>
 
-        {/* Welcome Header */}
+        {/* Header */}
         <div style={{
           marginBottom: '28px',
           display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'
@@ -198,21 +185,56 @@ export default function Dashboard() {
               Dewatering Price & Estimator Tool
             </p>
           </div>
-          <div style={{
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '10px', padding: '10px 16px',
-            textAlign: 'right'
-          }}>
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', marginBottom: '2px' }}>
-              TODAY
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '10px', padding: '10px 16px',
+              textAlign: 'right'
+            }}>
+              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', marginBottom: '2px' }}>TODAY</div>
+              <div style={{ color: 'white', fontSize: '13px', fontWeight: '500' }}>
+                {new Date().toLocaleDateString('en-PH', {
+                  weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+                })}
+              </div>
             </div>
-            <div style={{ color: 'white', fontSize: '13px', fontWeight: '500' }}>
-              {new Date().toLocaleDateString('en-PH', {
-                weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-              })}
-            </div>
+            <button
+              onClick={handleSignOut}
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: '8px', padding: '8px 14px',
+                color: 'rgba(255,255,255,0.6)', fontSize: '12px',
+                cursor: 'pointer', fontWeight: '500'
+              }}>
+              Sign out
+            </button>
           </div>
+        </div>
+
+        {/* Nav */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+          {[
+            { label: '📊 Dashboard', href: '/dashboard', active: true },
+            { label: '💰 Prices', href: '/prices', active: false },
+            { label: '🏗️ Estimator', href: '/estimator', active: false },
+          ].map((item) => (
+            <button
+              key={item.href}
+              onClick={() => navigate(item.href)}
+              style={{
+                padding: '8px 16px',
+                background: item.active ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)',
+                border: item.active ? '1px solid rgba(255,255,255,0.25)' : '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '8px',
+                color: item.active ? 'white' : 'rgba(255,255,255,0.5)',
+                fontSize: '13px', fontWeight: '500',
+                cursor: 'pointer'
+              }}>
+              {item.label}
+            </button>
+          ))}
         </div>
 
         {/* World Clocks */}
@@ -250,7 +272,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Row */}
+        {/* Stats */}
         <div style={{ marginBottom: '20px' }}>
           <div style={{
             color: 'rgba(255,255,255,0.35)', fontSize: '10px',
@@ -286,23 +308,19 @@ export default function Dashboard() {
                   justifyContent: 'center', fontSize: '20px'
                 }}>{stat.icon}</div>
                 <div>
-                  <div style={{
-                    color: 'white', fontSize: '24px',
-                    fontWeight: 'bold', lineHeight: 1
-                  }}>
-                    {loading ? '...' : stat.value}
+                  <div style={{ color: 'white', fontSize: '24px', fontWeight: 'bold', lineHeight: 1 }}>
+                    {stat.value}
                   </div>
-                  <div style={{
-                    color: 'rgba(255,255,255,0.4)',
-                    fontSize: '11px', marginTop: '3px'
-                  }}>{stat.label}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', marginTop: '3px' }}>
+                    {stat.label}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Bottom Row: Quick Actions + Recent Items */}
+        {/* Bottom Row */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
 
           {/* Quick Actions */}
@@ -323,13 +341,12 @@ export default function Dashboard() {
                 { icon: '📊', label: 'Rental Calc', href: '/rental', color: '#9C27B0' },
               ].map((action, i) => (
                 <div key={i}
-                  onClick={() => window.location.href = action.href}
+                  onClick={() => navigate(action.href)}
                   style={{
                     background: 'rgba(255,255,255,0.05)',
                     border: `1px solid rgba(255,255,255,0.08)`,
                     borderRadius: '12px', padding: '16px',
-                    cursor: 'pointer', transition: 'all 0.15s',
-                    textAlign: 'center'
+                    cursor: 'pointer', textAlign: 'center'
                   }}
                   onMouseOver={(e) => {
                     e.currentTarget.style.background = `${action.color}15`
@@ -370,7 +387,7 @@ export default function Dashboard() {
                 }}>No items yet</div>
               ) : recentItems.map((item: any, i) => (
                 <div key={item.id}
-                  onClick={() => window.location.href = '/prices'}
+                  onClick={() => navigate('/prices')}
                   style={{
                     display: 'flex', alignItems: 'center',
                     justifyContent: 'space-between',
@@ -388,26 +405,17 @@ export default function Dashboard() {
                       justifyContent: 'center', fontSize: '14px'
                     }}>📦</div>
                     <div>
-                      <div style={{
-                        color: 'rgba(255,255,255,0.8)',
-                        fontSize: '12px', fontWeight: '500'
-                      }}>
-                        {item.description.length > 28
+                      <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', fontWeight: '500' }}>
+                        {item.description?.length > 28
                           ? item.description.substring(0, 28) + '...'
                           : item.description}
                       </div>
-                      <div style={{
-                        color: 'rgba(255,255,255,0.3)',
-                        fontSize: '10px', marginTop: '1px'
-                      }}>
+                      <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '10px', marginTop: '1px' }}>
                         {item.categories?.name || 'Uncategorized'}
                       </div>
                     </div>
                   </div>
-                  <div style={{
-                    color: 'rgba(255,255,255,0.25)',
-                    fontSize: '10px', whiteSpace: 'nowrap'
-                  }}>
+                  <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: '10px', whiteSpace: 'nowrap' }}>
                     {new Date(item.created_at).toLocaleDateString('en-PH', {
                       month: 'short', day: 'numeric'
                     })}
