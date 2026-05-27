@@ -170,7 +170,6 @@ export default function LayoutClient({ user, profile, children }: Props) {
             {navLinks.map(link => (
               <a key={link.href} href={link.href} onClick={() => setSidebarOpen(false)}
                 style={{ color: pathname === link.href ? 'white' : 'rgba(255,255,255,0.65)', textDecoration: 'none', padding: '10px 14px', borderRadius: '8px', fontSize: '14px', fontWeight: pathname === link.href ? '600' : '400', background: pathname === link.href ? 'rgba(255,255,255,0.12)' : 'transparent', display: 'block' }}>
-                {link.link}
                 {link.label}
               </a>
             ))}
