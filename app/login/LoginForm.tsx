@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '../../lib/client'
+import { createClient } from '../lib/client'
 
 interface LoginFormProps {
   redirectTo?: string
