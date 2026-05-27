@@ -24,12 +24,7 @@ function MethodBadge({ tag }: { tag: string }) {
   const m = METHODS.find(x => x.id === tag)
   if (!m) return null
   return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: '4px',
-      padding: '3px 10px', borderRadius: '99px',
-      background: `${m.color}15`, border: `1px solid ${m.color}44`,
-      color: m.color, fontSize: '12px', fontWeight: '600'
-    }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '99px', background: `${m.color}15`, border: `1px solid ${m.color}44`, color: m.color, fontSize: '12px', fontWeight: '600' }}>
       {m.icon} {m.label}
     </span>
   )
@@ -41,18 +36,8 @@ function MethodSelector({ selected, onChange }: { selected: string[], onChange: 
       {METHODS.map(m => {
         const on = selected.includes(m.id)
         return (
-          <div key={m.id}
-            onClick={() => onChange(on ? selected.filter(x => x !== m.id) : [...selected, m.id])}
-            style={{
-              padding: '5px 12px', borderRadius: '99px',
-              border: `1.5px solid ${on ? m.color : '#e0e0e0'}`,
-              background: on ? `${m.color}15` : 'white',
-              color: on ? m.color : '#666',
-              fontSize: '12px', fontWeight: on ? '600' : '400',
-              cursor: 'pointer', transition: 'all 0.15s',
-              userSelect: 'none' as const,
-              display: 'flex', alignItems: 'center', gap: '4px'
-            }}>
+          <div key={m.id} onClick={() => onChange(on ? selected.filter(x => x !== m.id) : [...selected, m.id])}
+            style={{ padding: '5px 12px', borderRadius: '99px', border: `1.5px solid ${on ? m.color : '#e0e0e0'}`, background: on ? `${m.color}15` : 'white', color: on ? m.color : '#666', fontSize: '12px', fontWeight: on ? '600' : '400', cursor: 'pointer', transition: 'all 0.15s', userSelect: 'none' as const, display: 'flex', alignItems: 'center', gap: '4px' }}>
             {m.icon} {m.label}
           </div>
         )
@@ -80,10 +65,8 @@ export default function PricesPage() {
   const [uploading, setUploading] = useState(false)
   const { isGuest, showPermissionModal } = useGuest()
   const [newItem, setNewItem] = useState({
-    description: '', full_description: '',
-    category_id: '', unit: '', base_price: '',
-    supplier: '', supplier_contact: '', notes: '',
-    image_url: '', business_unit_id: '1',
+    description: '', full_description: '', category_id: '', unit: '', base_price: '',
+    supplier: '', supplier_contact: '', notes: '', image_url: '', business_unit_id: '1',
     method_tags: [] as string[]
   })
 
@@ -95,32 +78,18 @@ export default function PricesPage() {
   ]
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '8px 12px',
-    border: '1.5px solid #e0e0e0', borderRadius: '6px',
-    fontSize: '13px', color: '#000', backgroundColor: '#fff',
-    boxSizing: 'border-box', outline: 'none'
+    width: '100%', padding: '8px 12px', border: '1.5px solid #e0e0e0', borderRadius: '6px',
+    fontSize: '13px', color: '#000', backgroundColor: '#fff', boxSizing: 'border-box', outline: 'none'
   }
 
- useEffect(() => {
-    const init = async () => {
-      // Always get fresh session
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { window.location.href = '/login'; return }
-      setUserId(session.user.id)
-      setUserEmail(session.user.email || '')
-      await fetchData()
-    }
-    init()
-
-    // Re-fetch when auth state changes (e.g. after re-login)
-   useEffect(() => {
-  supabase.auth.getSession().then(async ({ data }) => {
-    if (!data.session) { window.location.replace('/login'); return }
-    setUserId(data.session.user.id)
-    setUserEmail(data.session.user.email || '')
-    fetchData()
-  })
-}, [])
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) { window.location.replace('/login'); return }
+      setUserId(data.session.user.id)
+      setUserEmail(data.session.user.email || '')
+      fetchData()
+    })
+  }, [])
 
   const fetchData = async () => {
     setLoading(true)
@@ -189,33 +158,23 @@ export default function PricesPage() {
   }
 
   const clearAll = () => {
-    setSearch(''); setSearchInput('')
-    setSelectedCategory(''); setSelectedMethod('')
-    setShowSuggestions(false)
+    setSearch(''); setSearchInput(''); setSelectedCategory(''); setSelectedMethod(''); setShowSuggestions(false)
   }
 
   const q = search.trim().toLowerCase()
   const filtered = items.filter(item => {
-    const matchSearch = !q ||
-      (item.description || '').toLowerCase().includes(q) ||
-      (item.supplier || '').toLowerCase().includes(q) ||
-      (item.categories?.name || '').toLowerCase().includes(q) ||
-      (item.unit || '').toLowerCase().includes(q)
+    const matchSearch = !q || (item.description || '').toLowerCase().includes(q) || (item.supplier || '').toLowerCase().includes(q) || (item.categories?.name || '').toLowerCase().includes(q) || (item.unit || '').toLowerCase().includes(q)
     const matchCat = !selectedCategory || String(item.category_id) === String(selectedCategory)
     const matchMethod = !selectedMethod || (Array.isArray(item.method_tags) && item.method_tags.includes(selectedMethod))
     return matchSearch && matchCat && matchMethod
   })
 
   const suggestions = searchInput.trim().length >= 1
-    ? items.filter(item =>
-        (item.description || '').toLowerCase().includes(searchInput.toLowerCase()) ||
-        (item.supplier || '').toLowerCase().includes(searchInput.toLowerCase()) ||
-        (item.categories?.name || '').toLowerCase().includes(searchInput.toLowerCase())
-      ).slice(0, 8)
+    ? items.filter(item => (item.description || '').toLowerCase().includes(searchInput.toLowerCase()) || (item.supplier || '').toLowerCase().includes(searchInput.toLowerCase()) || (item.categories?.name || '').toLowerCase().includes(searchInput.toLowerCase())).slice(0, 8)
     : []
 
   const formatDate = (d: string) => !d ? '-' : new Date(d).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })
-  const getBUFlag = (id: number) => ({ 1: '🇵🇭', 2: '🇸🇦', 3: '🇨🇦', 4: '🇦🇪' }[id] || '🌍')
+  const getBUFlag = (id: number) => ({ 1: '🇵🇭', 2: '🇸🇦', 3: '🇨🇦', 4: '🇦🇪' } as Record<number,string>)[id] || '🌍'
 
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f8', fontFamily: 'Arial, sans-serif' }}>
@@ -233,12 +192,7 @@ export default function PricesPage() {
           <button onClick={() => {
             if (isGuest) { showPermissionModal('Adding new items'); return }
             setShowAddForm(!showAddForm)
-          }} style={{
-            background: showAddForm ? '#e0e0e0' : 'linear-gradient(135deg, #1565C0, #0288D1)',
-            color: showAddForm ? '#333' : 'white', border: 'none',
-            padding: '10px 20px', borderRadius: '8px',
-            fontSize: '14px', fontWeight: '600', cursor: 'pointer'
-          }}>
+          }} style={{ background: showAddForm ? '#e0e0e0' : 'linear-gradient(135deg, #1565C0, #0288D1)', color: showAddForm ? '#333' : 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
             {showAddForm ? '✕ Cancel' : '➕ Add Item'}
           </button>
         </div>
@@ -246,14 +200,7 @@ export default function PricesPage() {
         {/* BU TABS */}
         <div style={{ display: 'flex', gap: '4px', marginBottom: '0' }}>
           {tabs.map(tab => (
-            <button key={tab.id} onClick={() => tab.active && setActiveTab(tab.id)} style={{
-              padding: '10px 20px', borderRadius: '8px 8px 0 0', border: 'none',
-              fontSize: '13px', fontWeight: '600', cursor: tab.active ? 'pointer' : 'not-allowed',
-              background: activeTab === tab.id ? 'white' : '#e0e0e0',
-              color: activeTab === tab.id ? '#0d2137' : '#999',
-              opacity: tab.active ? 1 : 0.6,
-              boxShadow: activeTab === tab.id ? '0 -2px 8px rgba(0,0,0,0.06)' : 'none'
-            }}>
+            <button key={tab.id} onClick={() => tab.active && setActiveTab(tab.id)} style={{ padding: '10px 20px', borderRadius: '8px 8px 0 0', border: 'none', fontSize: '13px', fontWeight: '600', cursor: tab.active ? 'pointer' : 'not-allowed', background: activeTab === tab.id ? 'white' : '#e0e0e0', color: activeTab === tab.id ? '#0d2137' : '#999', opacity: tab.active ? 1 : 0.6, boxShadow: activeTab === tab.id ? '0 -2px 8px rgba(0,0,0,0.06)' : 'none' }}>
               {tab.label} {!tab.active && '🔒'}
             </button>
           ))}
@@ -283,10 +230,7 @@ export default function PricesPage() {
                   ].map(field => (
                     <div key={field.key}>
                       <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#333', marginBottom: '4px' }}>{field.label}</label>
-                      <input type={field.type || 'text'} placeholder={field.placeholder}
-                        value={newItem[field.key as keyof typeof newItem] as string}
-                        onChange={(e) => setNewItem({ ...newItem, [field.key]: e.target.value })}
-                        style={inputStyle} />
+                      <input type={field.type || 'text'} placeholder={field.placeholder} value={newItem[field.key as keyof typeof newItem] as string} onChange={(e) => setNewItem({ ...newItem, [field.key]: e.target.value })} style={inputStyle} />
                     </div>
                   ))}
                   <div>
@@ -304,88 +248,58 @@ export default function PricesPage() {
                   </div>
                   <div style={{ gridColumn: '1 / -1' }}>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#333', marginBottom: '8px' }}>
-                      Applicable Dewatering Methods
-                      <span style={{ color: '#999', fontWeight: '400', marginLeft: '6px' }}>(select all that apply)</span>
+                      Applicable Dewatering Methods <span style={{ color: '#999', fontWeight: '400', marginLeft: '6px' }}>(select all that apply)</span>
                     </label>
                     <MethodSelector selected={newItem.method_tags} onChange={(v) => setNewItem({ ...newItem, method_tags: v })} />
-                    {newItem.method_tags.length === 0 && (
-                      <div style={{ fontSize: '11px', color: '#E65100', marginTop: '6px' }}>⚠️ No method selected — this item won't be auto-included in estimator schedules</div>
-                    )}
+                    {newItem.method_tags.length === 0 && <div style={{ fontSize: '11px', color: '#E65100', marginTop: '6px' }}>⚠️ No method selected — this item won't be auto-included in estimator schedules</div>}
                   </div>
                   <div style={{ gridColumn: '1 / -1' }}>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#333', marginBottom: '4px' }}>Full Description</label>
-                    <textarea placeholder="Detailed specs, usage notes, lead time..."
-                      value={newItem.full_description}
-                      onChange={(e) => setNewItem({ ...newItem, full_description: e.target.value })}
-                      rows={3} style={{ ...inputStyle, resize: 'vertical' as const }} />
+                    <textarea placeholder="Detailed specs, usage notes, lead time..." value={newItem.full_description} onChange={(e) => setNewItem({ ...newItem, full_description: e.target.value })} rows={3} style={{ ...inputStyle, resize: 'vertical' as const }} />
                   </div>
                   <div style={{ gridColumn: '1 / -1' }}>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#333', marginBottom: '4px' }}>Item Photo</label>
-                    <input type="file" accept="image/*"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0]
-                        if (file) { const url = await handleImageUpload(file); if (url) setNewItem({ ...newItem, image_url: url }) }
-                      }} style={{ fontSize: '13px', color: '#000' }} />
+                    <input type="file" accept="image/*" onChange={async (e) => { const file = e.target.files?.[0]; if (file) { const url = await handleImageUpload(file); if (url) setNewItem({ ...newItem, image_url: url }) } }} style={{ fontSize: '13px', color: '#000' }} />
                     {uploading && <span style={{ fontSize: '12px', color: '#1565C0', marginLeft: '8px' }}>⏳ Uploading...</span>}
                     {newItem.image_url && <img src={newItem.image_url} alt="preview" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', marginTop: '8px', display: 'block', border: '2px solid #1565C0' }} />}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                  <button onClick={handleAddItem} disabled={saving} style={{ background: saving ? '#90CAF9' : '#1565C0', color: 'white', border: 'none', padding: '10px 24px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
-                    {saving ? '⏳ Saving...' : '💾 Save Item'}
-                  </button>
+                  <button onClick={handleAddItem} disabled={saving} style={{ background: saving ? '#90CAF9' : '#1565C0', color: 'white', border: 'none', padding: '10px 24px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>{saving ? '⏳ Saving...' : '💾 Save Item'}</button>
                   <button onClick={() => setShowAddForm(false)} style={{ background: '#e0e0e0', color: '#333', border: 'none', padding: '10px 24px', borderRadius: '8px', fontSize: '14px', cursor: 'pointer' }}>Cancel</button>
                 </div>
               </div>
             )}
 
-            {/* SEARCH & FILTER BAR */}
+            {/* SEARCH & FILTER */}
             <div style={{ padding: '16px 24px', borderBottom: '1px solid #f0f0f0', display: 'flex', gap: '10px', flexWrap: 'wrap' as const, alignItems: 'flex-start' }}>
               <div style={{ flex: 1, minWidth: '260px', position: 'relative' as const }}>
                 <div style={{ display: 'flex' }}>
-                  <input type="text" placeholder="🔍 Search description, supplier, category..."
-                    value={searchInput}
+                  <input type="text" placeholder="🔍 Search description, supplier, category..." value={searchInput}
                     onChange={(e) => { setSearchInput(e.target.value); setSearch(e.target.value); setShowSuggestions(true) }}
                     onKeyDown={(e) => { if (e.key === 'Enter') { setSearch(searchInput); setShowSuggestions(false) } if (e.key === 'Escape') setShowSuggestions(false) }}
                     onFocus={() => { if (searchInput) setShowSuggestions(true) }}
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                     style={{ ...inputStyle, flex: 1, padding: '10px 16px', borderRadius: '8px 0 0 8px', borderRight: 'none' }} />
-                  {searchInput && (
-                    <button onClick={() => { setSearchInput(''); setSearch('') }}
-                      style={{ background: '#f5f5f5', border: '1.5px solid #e0e0e0', borderLeft: 'none', borderRight: 'none', color: '#999', padding: '0 10px', fontSize: '18px', cursor: 'pointer' }}>×</button>
-                  )}
-                  <button onClick={() => { setSearch(searchInput); setShowSuggestions(false) }}
-                    style={{ background: 'linear-gradient(135deg, #1565C0, #0288D1)', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '0 8px 8px 0', fontSize: '13px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' as const }}>
-                    🔍 Search
-                  </button>
+                  {searchInput && <button onClick={() => { setSearchInput(''); setSearch('') }} style={{ background: '#f5f5f5', border: '1.5px solid #e0e0e0', borderLeft: 'none', borderRight: 'none', color: '#999', padding: '0 10px', fontSize: '18px', cursor: 'pointer' }}>×</button>}
+                  <button onClick={() => { setSearch(searchInput); setShowSuggestions(false) }} style={{ background: 'linear-gradient(135deg, #1565C0, #0288D1)', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '0 8px 8px 0', fontSize: '13px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' as const }}>🔍 Search</button>
                 </div>
                 {showSuggestions && searchInput.trim().length >= 1 && (
                   <div style={{ position: 'absolute' as const, top: '100%', left: 0, right: 0, zIndex: 999, background: 'white', border: '1.5px solid #e0e0e0', borderTop: 'none', borderRadius: '0 0 12px 12px', boxShadow: '0 12px 32px rgba(0,0,0,0.12)', maxHeight: '300px', overflowY: 'auto' as const }}>
                     {suggestions.length > 0 ? (
                       <>
-                        <div style={{ padding: '6px 16px', fontSize: '10px', color: '#999', fontWeight: '700', letterSpacing: '1px', textTransform: 'uppercase' as const, borderBottom: '1px solid #f0f0f0', background: '#fafafa' }}>
-                          {suggestions.length} suggestion{suggestions.length !== 1 ? 's' : ''}
-                        </div>
+                        <div style={{ padding: '6px 16px', fontSize: '10px', color: '#999', fontWeight: '700', letterSpacing: '1px', textTransform: 'uppercase' as const, borderBottom: '1px solid #f0f0f0', background: '#fafafa' }}>{suggestions.length} suggestion{suggestions.length !== 1 ? 's' : ''}</div>
                         {suggestions.map((item: any) => (
-                          <div key={item.id}
-                            onMouseDown={() => { setSearchInput(item.description); setSearch(item.description); setShowSuggestions(false) }}
+                          <div key={item.id} onMouseDown={() => { setSearchInput(item.description); setSearch(item.description); setShowSuggestions(false) }}
                             style={{ padding: '10px 16px', borderBottom: '1px solid #f5f5f5', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', background: 'white' }}
                             onMouseOver={(e) => e.currentTarget.style.background = '#f0f7ff'}
                             onMouseOut={(e) => e.currentTarget.style.background = 'white'}>
-                            {item.image_url
-                              ? <img src={item.image_url} alt="" style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }} />
-                              : <div style={{ width: '36px', height: '36px', background: '#f0f0f0', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>📦</div>
-                            }
+                            {item.image_url ? <img src={item.image_url} alt="" style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }} /> : <div style={{ width: '36px', height: '36px', background: '#f0f0f0', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>📦</div>}
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: '13px', color: '#0d2137', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{item.description}</div>
-                              <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' as const }}>
-                                <span>{item.categories?.name || 'Uncategorized'}</span>
-                                <span>·</span>
+                              <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                <span>{item.categories?.name || 'Uncategorized'}</span><span>·</span>
                                 <span style={{ color: '#1565C0', fontWeight: '700' }}>₱{parseFloat(item.base_price).toLocaleString()}</span>
-                                {(item.method_tags || []).slice(0, 2).map((tag: string) => {
-                                  const m = METHODS.find(x => x.id === tag)
-                                  return m ? <span key={tag} style={{ background: `${m.color}15`, color: m.color, padding: '1px 5px', borderRadius: '3px', fontSize: '10px', fontWeight: '600' }}>{m.short}</span> : null
-                                })}
                               </div>
                             </div>
                             <span style={{ fontSize: '12px', color: '#bbb', flexShrink: 0 }}>↵</span>
@@ -446,21 +360,15 @@ export default function PricesPage() {
                   </thead>
                   <tbody>
                     {filtered.map((item: any) => (
-                      <tr key={item.id}
-                        onClick={() => { setSelectedItem(item); setEditMode(false) }}
+                      <tr key={item.id} onClick={() => { setSelectedItem(item); setEditMode(false) }}
                         style={{ borderBottom: '1px solid #f0f0f0', background: 'white', cursor: 'pointer', transition: 'background 0.1s' }}
                         onMouseOver={(e) => e.currentTarget.style.background = '#f0f7ff'}
                         onMouseOut={(e) => e.currentTarget.style.background = 'white'}>
                         <td style={{ padding: '8px 14px' }}>
-                          {item.image_url
-                            ? <img src={item.image_url} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e0e0e0' }} />
-                            : <div style={{ width: '40px', height: '40px', background: '#f5f5f5', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', border: '1px solid #e8e8e8' }}>📦</div>
-                          }
+                          {item.image_url ? <img src={item.image_url} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e0e0e0' }} /> : <div style={{ width: '40px', height: '40px', background: '#f5f5f5', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', border: '1px solid #e8e8e8' }}>📦</div>}
                         </td>
                         <td style={{ padding: '10px 14px' }}>
-                          <span style={{ background: '#E3F2FD', color: '#1565C0', padding: '3px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: '600', whiteSpace: 'nowrap' as const }}>
-                            {item.categories?.name || 'Uncategorized'}
-                          </span>
+                          <span style={{ background: '#E3F2FD', color: '#1565C0', padding: '3px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: '600', whiteSpace: 'nowrap' as const }}>{item.categories?.name || 'Uncategorized'}</span>
                         </td>
                         <td style={{ padding: '10px 14px', maxWidth: '220px' }}>
                           <div style={{ color: '#0d2137', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{item.description}</div>
@@ -472,30 +380,18 @@ export default function PricesPage() {
                           <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{item.supplier || '-'}</div>
                         </td>
                         <td style={{ padding: '10px 14px' }}>
-                          {(item.method_tags || []).length === 0
-                            ? <span style={{ fontSize: '11px', color: '#ddd' }}>—</span>
-                            : <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' as const }}>
-                                {(item.method_tags || []).map((tag: string) => {
-                                  const m = METHODS.find(x => x.id === tag)
-                                  return m ? <span key={tag} style={{ fontSize: '10px', fontWeight: '700', padding: '2px 6px', borderRadius: '4px', background: `${m.color}15`, color: m.color, border: `1px solid ${m.color}33`, whiteSpace: 'nowrap' as const }}>{m.icon} {m.short}</span> : null
-                                })}
-                              </div>
-                          }
+                          {(item.method_tags || []).length === 0 ? <span style={{ fontSize: '11px', color: '#ddd' }}>—</span> : (
+                            <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' as const }}>
+                              {(item.method_tags || []).map((tag: string) => { const m = METHODS.find(x => x.id === tag); return m ? <span key={tag} style={{ fontSize: '10px', fontWeight: '700', padding: '2px 6px', borderRadius: '4px', background: `${m.color}15`, color: m.color, border: `1px solid ${m.color}33`, whiteSpace: 'nowrap' as const }}>{m.icon} {m.short}</span> : null })}
+                            </div>
+                          )}
                         </td>
                         <td style={{ padding: '10px 14px', fontSize: '20px', textAlign: 'center' as const }}>{getBUFlag(item.business_unit_id)}</td>
                         <td style={{ padding: '10px 14px', color: '#aaa', fontSize: '11px', whiteSpace: 'nowrap' as const }}>{formatDate(item.created_at)}</td>
-
-                        {/* ── ACTIONS — guest check on both buttons ── */}
                         <td style={{ padding: '10px 14px' }} onClick={(e) => e.stopPropagation()}>
                           <div style={{ display: 'flex', gap: '4px' }}>
-                            <button onClick={() => {
-                              if (isGuest) { showPermissionModal('Editing items'); return }
-                              setSelectedItem(item); setEditMode(true)
-                            }} style={{ background: '#E3F2FD', color: '#1565C0', border: 'none', padding: '6px 10px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>✏️</button>
-                            <button onClick={() => {
-                              if (isGuest) { showPermissionModal('Deleting items'); return }
-                              handleDelete(item.id)
-                            }} style={{ background: '#ffebee', color: '#c62828', border: 'none', padding: '6px 10px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>🗑️</button>
+                            <button onClick={() => { if (isGuest) { showPermissionModal('Editing items'); return } setSelectedItem(item); setEditMode(true) }} style={{ background: '#E3F2FD', color: '#1565C0', border: 'none', padding: '6px 10px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>✏️</button>
+                            <button onClick={() => { if (isGuest) { showPermissionModal('Deleting items'); return } handleDelete(item.id) }} style={{ background: '#ffebee', color: '#c62828', border: 'none', padding: '6px 10px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>🗑️</button>
                           </div>
                         </td>
                       </tr>
@@ -510,37 +406,24 @@ export default function PricesPage() {
 
       {/* ITEM DETAIL / EDIT MODAL */}
       {selectedItem && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 500, padding: '20px' }}
-          onClick={() => { setSelectedItem(null); setEditMode(false) }}>
-          <div style={{ background: 'white', borderRadius: '16px', padding: '28px', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.25)' }}
-            onClick={(e) => e.stopPropagation()}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 500, padding: '20px' }} onClick={() => { setSelectedItem(null); setEditMode(false) }}>
+          <div style={{ background: 'white', borderRadius: '16px', padding: '28px', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.25)' }} onClick={(e) => e.stopPropagation()}>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '17px', fontWeight: '600', color: '#0d2137', margin: 0 }}>
-                {editMode ? '✏️ Edit Item' : '📋 Item Details'}
-              </h2>
-              <button onClick={() => { setSelectedItem(null); setEditMode(false) }}
-                style={{ background: '#f5f5f5', border: 'none', width: '32px', height: '32px', borderRadius: '50%', fontSize: '16px', cursor: 'pointer', color: '#666' }}>✕</button>
+              <h2 style={{ fontSize: '17px', fontWeight: '600', color: '#0d2137', margin: 0 }}>{editMode ? '✏️ Edit Item' : '📋 Item Details'}</h2>
+              <button onClick={() => { setSelectedItem(null); setEditMode(false) }} style={{ background: '#f5f5f5', border: 'none', width: '32px', height: '32px', borderRadius: '50%', fontSize: '16px', cursor: 'pointer', color: '#666' }}>✕</button>
             </div>
 
             <div style={{ marginBottom: '20px' }}>
-              {selectedItem.image_url
-                ? <img src={selectedItem.image_url} alt={selectedItem.description} style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '10px', border: '1px solid #e0e0e0' }} />
-                : <div style={{ width: '100%', height: '100px', background: '#f5f5f5', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', border: '1px solid #e8e8e8' }}>📦</div>
-              }
+              {selectedItem.image_url ? <img src={selectedItem.image_url} alt={selectedItem.description} style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '10px', border: '1px solid #e0e0e0' }} /> : <div style={{ width: '100%', height: '100px', background: '#f5f5f5', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', border: '1px solid #e8e8e8' }}>📦</div>}
               {editMode && !isGuest && (
                 <div style={{ marginTop: '8px' }}>
-                  <input type="file" accept="image/*"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0]
-                      if (file) { const url = await handleImageUpload(file); if (url) setSelectedItem({ ...selectedItem, image_url: url }) }
-                    }} style={{ fontSize: '13px', color: '#000' }} />
+                  <input type="file" accept="image/*" onChange={async (e) => { const file = e.target.files?.[0]; if (file) { const url = await handleImageUpload(file); if (url) setSelectedItem({ ...selectedItem, image_url: url }) } }} style={{ fontSize: '13px', color: '#000' }} />
                   {uploading && <span style={{ fontSize: '12px', color: '#1565C0' }}> ⏳ Uploading...</span>}
                 </div>
               )}
             </div>
 
-            {/* VIEW MODE */}
             {!editMode ? (
               <div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
@@ -560,44 +443,27 @@ export default function PricesPage() {
                     </div>
                   ))}
                 </div>
-
                 <div style={{ background: '#f8f9fa', borderRadius: '8px', padding: '12px 14px', marginBottom: '12px' }}>
                   <div style={{ fontSize: '10px', color: '#999', fontWeight: '700', textTransform: 'uppercase' as const, letterSpacing: '0.5px', marginBottom: '10px' }}>Applicable Dewatering Methods</div>
-                  {(selectedItem.method_tags || []).length === 0
-                    ? <div style={{ fontSize: '13px', color: '#aaa', fontStyle: 'italic' }}>No methods assigned</div>
-                    : <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
-                        {(selectedItem.method_tags || []).map((tag: string) => <MethodBadge key={tag} tag={tag} />)}
-                      </div>
-                  }
+                  {(selectedItem.method_tags || []).length === 0 ? <div style={{ fontSize: '13px', color: '#aaa', fontStyle: 'italic' }}>No methods assigned</div> : <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>{(selectedItem.method_tags || []).map((tag: string) => <MethodBadge key={tag} tag={tag} />)}</div>}
                 </div>
-
                 {selectedItem.full_description && (
                   <div style={{ background: '#f8f9fa', borderRadius: '8px', padding: '12px', marginBottom: '12px' }}>
                     <div style={{ fontSize: '10px', color: '#999', marginBottom: '6px', fontWeight: '700', textTransform: 'uppercase' as const }}>Full Description</div>
                     <div style={{ fontSize: '13px', color: '#333', lineHeight: '1.7' }}>{selectedItem.full_description}</div>
                   </div>
                 )}
-
                 <div style={{ background: '#E8F5E9', borderRadius: '8px', padding: '12px 14px', fontSize: '12px', color: '#2E7D32', marginBottom: '16px', lineHeight: '1.8' }}>
                   <div>📅 Added: {formatDate(selectedItem.created_at)}</div>
                   {selectedItem.updated_at && selectedItem.updated_at !== selectedItem.created_at && <div>✏️ Last edited: {formatDate(selectedItem.updated_at)}</div>}
                 </div>
-
-                {/* ── MODAL BUTTONS — guest check here too ── */}
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={() => {
-                    if (isGuest) { showPermissionModal('Editing items'); return }
-                    setEditMode(true)
-                  }} style={{ background: '#1565C0', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>✏️ Edit Item</button>
-                  <button onClick={() => {
-                    if (isGuest) { showPermissionModal('Deleting items'); return }
-                    handleDelete(selectedItem.id)
-                  }} style={{ background: '#ffebee', color: '#c62828', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>🗑️ Delete</button>
+                  <button onClick={() => { if (isGuest) { showPermissionModal('Editing items'); return } setEditMode(true) }} style={{ background: '#1565C0', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>✏️ Edit Item</button>
+                  <button onClick={() => { if (isGuest) { showPermissionModal('Deleting items'); return } handleDelete(selectedItem.id) }} style={{ background: '#ffebee', color: '#c62828', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>🗑️ Delete</button>
                   <button onClick={() => setSelectedItem(null)} style={{ background: '#f0f0f0', color: '#333', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', marginLeft: 'auto' }}>Close</button>
                 </div>
               </div>
             ) : (
-              /* EDIT MODE */
               <div>
                 <div style={{ display: 'grid', gap: '10px', marginBottom: '16px' }}>
                   {[
@@ -610,9 +476,7 @@ export default function PricesPage() {
                   ].map(field => (
                     <div key={field.key}>
                       <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#333', marginBottom: '4px' }}>{field.label}</label>
-                      <input type={field.type || 'text'} value={selectedItem[field.key] || ''}
-                        onChange={(e) => setSelectedItem({ ...selectedItem, [field.key]: e.target.value })}
-                        style={inputStyle} />
+                      <input type={field.type || 'text'} value={selectedItem[field.key] || ''} onChange={(e) => setSelectedItem({ ...selectedItem, [field.key]: e.target.value })} style={inputStyle} />
                     </div>
                   ))}
                   <div>
@@ -628,15 +492,11 @@ export default function PricesPage() {
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#333', marginBottom: '4px' }}>Full Description</label>
-                    <textarea value={selectedItem.full_description || ''}
-                      onChange={(e) => setSelectedItem({ ...selectedItem, full_description: e.target.value })}
-                      rows={3} style={{ ...inputStyle, resize: 'vertical' as const }} />
+                    <textarea value={selectedItem.full_description || ''} onChange={(e) => setSelectedItem({ ...selectedItem, full_description: e.target.value })} rows={3} style={{ ...inputStyle, resize: 'vertical' as const }} />
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={handleEditSave} disabled={saving} style={{ background: saving ? '#90CAF9' : '#1565C0', color: 'white', border: 'none', padding: '10px 24px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
-                    {saving ? '⏳ Saving...' : '💾 Save Changes'}
-                  </button>
+                  <button onClick={handleEditSave} disabled={saving} style={{ background: saving ? '#90CAF9' : '#1565C0', color: 'white', border: 'none', padding: '10px 24px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>{saving ? '⏳ Saving...' : '💾 Save Changes'}</button>
                   <button onClick={() => setEditMode(false)} style={{ background: '#f0f0f0', color: '#333', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>Cancel</button>
                 </div>
               </div>
