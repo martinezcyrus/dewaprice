@@ -107,7 +107,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const showPermissionModal = (action = 'This action') => setPermissionModal(action)
 
   useEffect(() => {
-    // ── Safety timeout: never stay stuck loading more than 3 seconds ──
     const timeout = setTimeout(() => setLoading(false), 3000)
 
     supabase.auth.getSession().then(async ({ data }) => {
@@ -122,7 +121,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           console.warn('Profile fetch failed:', e)
         }
       }
-      // Always stop loading once session check is done
       clearTimeout(timeout)
       setLoading(false)
     }).catch(() => {
@@ -130,8 +128,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       setLoading(false)
     })
 
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session) {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Ignore these events — they cause double-firing issues
+      if (event === 'INITIAL_SESSION') return
+
+      if (event === 'SIGNED_OUT') {
+        setUser(null)
+        setProfile(null)
+        setLoading(false)
+        window.location.href = '/login'
+        return
+      }
+
+      if (event === 'SIGNED_IN' && session) {
         setUser(session.user)
         try {
           const { data: prof } = await supabase
@@ -141,12 +150,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         } catch (e) {
           console.warn('Profile fetch failed:', e)
         }
-      } else {
-        setUser(null)
-        setProfile(null)
+        setLoading(false)
       }
-      // Always stop loading after auth state change
-      setLoading(false)
     })
 
     return () => {
