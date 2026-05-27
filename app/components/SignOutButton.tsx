@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { createClient } from '../../lib/client'
+import { createClient } from '../lib/client'
 
 interface SignOutButtonProps {
   className?: string
