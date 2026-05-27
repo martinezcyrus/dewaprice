@@ -23,7 +23,9 @@ export default function DemoPage() {
         return
       }
 
-      window.location.href = '/dashboard'
+      setTimeout(() => {
+  window.location.href = '/dashboard'
+}, 500)
     }
 
     loginAsGuest()
