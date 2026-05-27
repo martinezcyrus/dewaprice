@@ -2,7 +2,7 @@
 
 import { useState, createContext, useContext } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { createClient } from '../lib/client'
+import { createClient } from './lib/client'
 
 export const GuestContext = createContext<{
   isGuest: boolean
