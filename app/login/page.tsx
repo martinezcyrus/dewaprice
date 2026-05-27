@@ -12,9 +12,6 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    // Sign out any existing session first (clears guest session)
-    await supabase.auth.signOut();
-
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
