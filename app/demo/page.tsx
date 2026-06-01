@@ -7,7 +7,7 @@ import { createClient } from '../lib/client'
 export default function DemoPage() {
   const router = useRouter()
   const [error, setError] = useState('')
-  const supabase = createClient()
+  const supabase = await createClient()
 
   useEffect(() => {
     const autoLogin = async () => {
