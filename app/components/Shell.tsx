@@ -23,6 +23,7 @@ export default function Shell({ user, profile, children }: ShellProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const supabase = createClient()
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     window.location.href = '/login'
@@ -33,7 +34,6 @@ export default function Shell({ user, profile, children }: ShellProps) {
   const SIDEBAR_W = collapsed ? 72 : 240
 
   const isActive = (href: string) => pathname.startsWith(href)
-  const currentTab = NAV.find(n => isActive(n.href))
 
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f8', display: 'flex', fontFamily: 'Arial, sans-serif' }}>
@@ -130,7 +130,7 @@ export default function Shell({ user, profile, children }: ShellProps) {
                     background: active ? '#eff6ff' : 'transparent',
                     border: 'none', borderRadius: '8px',
                     color: active ? '#1565C0' : '#64748b', fontSize: '13px', fontWeight: active ? '700' : '500',
-                    cursor: 'pointer', transition: 'all 0.15s', position: 'relative', height: '40px'
+                    cursor: 'pointer', transition: 'all 0.15s', height: '40px'
                   }}
                   onMouseOver={(e) => { if (!active) e.currentTarget.style.background = '#f1f5f9' }}
                   onMouseOut={(e) => { if (!active) e.currentTarget.style.background = 'transparent' }}>
