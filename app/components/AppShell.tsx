@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import NavBar from './NavBar'
 
 export default async function AppShell({ children }: { children: React.ReactNode }) {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
