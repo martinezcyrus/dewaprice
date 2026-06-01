@@ -34,6 +34,7 @@ export default function LoginForm({ redirectTo, error }: LoginFormProps) {
       return
     }
 
+    await supabase.auth.getSession()
     window.location.href = redirectTo || '/dashboard'
   }
 
