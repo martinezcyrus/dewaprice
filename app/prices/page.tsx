@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import PricesClient from './PricesClient'
 
 export default async function PricesPage() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
