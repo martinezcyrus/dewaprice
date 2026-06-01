@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import SignOutButton from './SignOutButton'
+import { createClient } from '../lib/client'
 import type { User } from '@supabase/supabase-js'
 
 interface ShellProps {
@@ -22,6 +22,11 @@ export default function Shell({ user, profile, children }: ShellProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const supabase = createClient()
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    window.location.href = '/login'
+  }
 
   const displayName = profile?.full_name || user.email?.split('@')[0] || 'User'
   const role = profile?.role || 'user'
@@ -95,13 +100,13 @@ export default function Shell({ user, profile, children }: ShellProps) {
               </div>
             )}
           </div>
-          <SignOutButton style={{
+          <button onClick={handleSignOut} title="Sign out" style={{
             width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
             padding: '9px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
             borderRadius: '8px', color: 'rgba(255,255,255,0.7)', fontSize: '12px', fontWeight: '600', cursor: 'pointer'
           }}>
             <span>⏻</span>{!collapsed && <span>Sign out</span>}
-          </SignOutButton>
+          </button>
         </div>
       </aside>
 
