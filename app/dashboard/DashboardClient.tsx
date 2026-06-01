@@ -12,6 +12,13 @@ const BUS = [
   { flag: '🇬🇧', name: 'UK', tz: 'Europe/London', currency: 'GBP', color: '#00695C', active: false },
 ]
 
+const NAV = [
+  { icon: '📊', label: 'Dashboard', href: '/dashboard', active: true },
+  { icon: '💰', label: 'Prices', href: '/prices', active: false },
+  { icon: '🏗️', label: 'Estimator', href: '/estimator', active: false },
+  { icon: '🛠️', label: 'Rental', href: '/rental', active: false },
+]
+
 function WorldClock({ flag, name, tz, currency, color, active }: any) {
   const [time, setTime] = useState('')
   const [date, setDate] = useState('')
@@ -21,16 +28,12 @@ function WorldClock({ flag, name, tz, currency, color, active }: any) {
     const update = () => {
       const now = new Date()
       const timeStr = now.toLocaleTimeString('en-US', {
-        timeZone: tz, hour: '2-digit',
-        minute: '2-digit', second: '2-digit', hour12: true
+        timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
       })
       const parts = timeStr.split(' ')
       setTime(parts[0])
       setPeriod(parts[1] || '')
-      setDate(now.toLocaleDateString('en-US', {
-        timeZone: tz, weekday: 'short',
-        month: 'short', day: 'numeric'
-      }))
+      setDate(now.toLocaleDateString('en-US', { timeZone: tz, weekday: 'short', month: 'short', day: 'numeric' }))
     }
     update()
     const interval = setInterval(update, 1000)
@@ -39,33 +42,19 @@ function WorldClock({ flag, name, tz, currency, color, active }: any) {
 
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.07)',
-      border: `1px solid rgba(255,255,255,0.1)`,
-      borderTop: `3px solid ${color}`,
-      borderRadius: '12px', padding: '18px 16px',
-      textAlign: 'center', flex: 1, minWidth: '150px',
-      opacity: active ? 1 : 0.65
+      background: '#fff', border: '1px solid #e6edf3', borderTop: `3px solid ${color}`,
+      borderRadius: '12px', padding: '16px 14px', textAlign: 'center', flex: 1, minWidth: '140px',
+      opacity: active ? 1 : 0.7, boxShadow: '0 1px 3px rgba(13,33,55,0.04)'
     }}>
-      <div style={{ fontSize: '28px', marginBottom: '6px' }}>{flag}</div>
-      <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '12px', marginBottom: '10px', fontWeight: '500' }}>
-        {name}
-      </div>
+      <div style={{ fontSize: '26px', marginBottom: '4px' }}>{flag}</div>
+      <div style={{ color: '#64748b', fontSize: '11px', marginBottom: '8px', fontWeight: '600' }}>{name}</div>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
-        <span style={{
-          color: 'white', fontSize: '24px',
-          fontWeight: 'bold', fontFamily: 'monospace', letterSpacing: '1px'
-        }}>{time}</span>
-        <span style={{ color: color, fontSize: '12px', fontWeight: '600' }}>{period}</span>
+        <span style={{ color: '#0d2137', fontSize: '22px', fontWeight: 'bold', fontFamily: 'monospace', letterSpacing: '0.5px' }}>{time}</span>
+        <span style={{ color, fontSize: '11px', fontWeight: '700' }}>{period}</span>
       </div>
-      <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginTop: '6px' }}>{date}</div>
+      <div style={{ color: '#94a3b8', fontSize: '11px', marginTop: '5px' }}>{date}</div>
       {!active && (
-        <div style={{
-          marginTop: '8px', fontSize: '10px',
-          color: 'rgba(255,255,255,0.25)',
-          background: 'rgba(255,255,255,0.05)',
-          borderRadius: '99px', padding: '2px 8px',
-          display: 'inline-block'
-        }}>Coming Soon</div>
+        <div style={{ marginTop: '8px', fontSize: '10px', color: '#94a3b8', background: '#f1f5f9', borderRadius: '99px', padding: '2px 8px', display: 'inline-block' }}>Coming Soon</div>
       )}
     </div>
   )
@@ -93,339 +82,289 @@ function CurrencyCard({ flag, name, currency, color, active }: any) {
 
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.07)',
-      border: `1px solid rgba(255,255,255,0.1)`,
-      borderTop: `3px solid ${color}`,
-      borderRadius: '12px', padding: '18px 16px',
-      textAlign: 'center', flex: 1, minWidth: '150px',
-      opacity: active ? 1 : 0.65
+      background: '#fff', border: '1px solid #e6edf3', borderTop: `3px solid ${color}`,
+      borderRadius: '12px', padding: '16px 14px', textAlign: 'center', flex: 1, minWidth: '140px',
+      opacity: active ? 1 : 0.7, boxShadow: '0 1px 3px rgba(13,33,55,0.04)'
     }}>
-      <div style={{ fontSize: '28px', marginBottom: '6px' }}>{flag}</div>
-      <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '12px', marginBottom: '10px', fontWeight: '500' }}>
-        {name}
-      </div>
+      <div style={{ fontSize: '26px', marginBottom: '4px' }}>{flag}</div>
+      <div style={{ color: '#64748b', fontSize: '11px', marginBottom: '8px', fontWeight: '600' }}>{name}</div>
       {currency === 'PHP' ? (
         <>
-          <div style={{ color: 'white', fontSize: '22px', fontWeight: 'bold' }}>Base</div>
-          <div style={{ color: color, fontSize: '13px', fontWeight: '600', marginTop: '4px' }}>PHP ₱</div>
+          <div style={{ color: '#0d2137', fontSize: '20px', fontWeight: 'bold' }}>Base</div>
+          <div style={{ color, fontSize: '13px', fontWeight: '700', marginTop: '4px' }}>PHP ₱</div>
         </>
       ) : (
         <>
-          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', marginBottom: '4px' }}>
-            1 {currency} =
-          </div>
-          <div style={{ color: 'white', fontSize: '22px', fontWeight: 'bold' }}>
+          <div style={{ color: '#94a3b8', fontSize: '11px', marginBottom: '4px' }}>1 {currency} =</div>
+          <div style={{ color: '#0d2137', fontSize: '20px', fontWeight: 'bold' }}>
             {loading ? '...' : `₱${phpPerUnit ? parseFloat(phpPerUnit).toLocaleString() : '-'}`}
           </div>
-          <div style={{ color: color, fontSize: '13px', fontWeight: '600', marginTop: '4px' }}>
-            {currency}
-          </div>
+          <div style={{ color, fontSize: '13px', fontWeight: '700', marginTop: '4px' }}>{currency}</div>
           {!loading && rate && (
-            <div style={{
-              color: change >= 0 ? '#81C784' : '#EF9A9A',
-              fontSize: '11px', marginTop: '4px'
-            }}>
+            <div style={{ color: change >= 0 ? '#16a34a' : '#dc2626', fontSize: '11px', marginTop: '4px' }}>
               {change >= 0 ? '▲' : '▼'} {Math.abs(change * 100).toFixed(2)}%
             </div>
           )}
         </>
       )}
       {!active && (
-        <div style={{
-          marginTop: '8px', fontSize: '10px',
-          color: 'rgba(255,255,255,0.25)',
-          background: 'rgba(255,255,255,0.05)',
-          borderRadius: '99px', padding: '2px 8px',
-          display: 'inline-block'
-        }}>Coming Soon</div>
+        <div style={{ marginTop: '8px', fontSize: '10px', color: '#94a3b8', background: '#f1f5f9', borderRadius: '99px', padding: '2px 8px', display: 'inline-block' }}>Coming Soon</div>
       )}
+    </div>
+  )
+}
+
+function SectionLabel({ icon, children, extra }: { icon: string; children: React.ReactNode; extra?: React.ReactNode }) {
+  return (
+    <div style={{
+      color: '#64748b', fontSize: '10px', fontWeight: '700', letterSpacing: '1.5px',
+      textTransform: 'uppercase', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px'
+    }}>
+      <span>{icon}</span> {children} {extra}
     </div>
   )
 }
 
 interface Props {
   userName: string
+  userEmail?: string
   stats: { items: number; categories: number; suppliers: number }
   recentItems: any[]
 }
 
-export default function DashboardClient({ userName, stats, recentItems }: Props) {
+export default function DashboardClient({ userName, userEmail, stats, recentItems }: Props) {
   const router = useRouter()
   const supabase = createClient()
+  const [collapsed, setCollapsed] = useState(false)
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    router.refresh()
-    router.push('/login')
+    window.location.href = '/login'
   }
 
   const navigate = (href: string) => router.push(href)
 
-  return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(160deg, #0d2137 0%, #163351 40%, #1a3d5c 100%)',
-    }}>
-      <div style={{ padding: '28px 32px' }}>
+  const SIDEBAR_W = collapsed ? 72 : 240
 
-        {/* Header */}
+  return (
+    <div style={{ minHeight: '100vh', background: '#f0f4f8', display: 'flex', fontFamily: 'Arial, sans-serif' }}>
+
+      {/* ===== SIDEBAR ===== */}
+      <aside style={{
+        width: SIDEBAR_W, flexShrink: 0, background: 'linear-gradient(180deg, #0d2137 0%, #122c47 100%)',
+        display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh',
+        transition: 'width 0.22s ease', borderRight: '1px solid rgba(255,255,255,0.06)'
+      }}>
+        {/* Logo + toggle */}
         <div style={{
-          marginBottom: '28px',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'
+          padding: collapsed ? '20px 0' : '20px 18px', display: 'flex', alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)'
         }}>
-          <div>
-            <h1 style={{
-              color: 'white', fontSize: '24px',
-              fontWeight: '600', margin: '0 0 4px 0',
-              letterSpacing: '-0.3px'
-            }}>
-              Good day, {userName} 👋
-            </h1>
-            <p style={{ color: 'rgba(255,255,255,0.45)', margin: 0, fontSize: '13px' }}>
-              Dewatering Price & Estimator Tool
-            </p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '10px', padding: '10px 16px',
-              textAlign: 'right'
-            }}>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', marginBottom: '2px' }}>TODAY</div>
-              <div style={{ color: 'white', fontSize: '13px', fontWeight: '500' }}>
-                {new Date().toLocaleDateString('en-PH', {
-                  weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-                })}
-              </div>
+          {!collapsed && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '34px', height: '34px', borderRadius: '9px', background: '#1565C0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>💧</div>
+              <span style={{ color: '#fff', fontSize: '16px', fontWeight: '700', letterSpacing: '-0.3px' }}>DewaPrice</span>
             </div>
-            <button
-              onClick={handleSignOut}
-              style={{
-                background: 'rgba(255,255,255,0.08)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                borderRadius: '8px', padding: '8px 14px',
-                color: 'rgba(255,255,255,0.6)', fontSize: '12px',
-                cursor: 'pointer', fontWeight: '500'
-              }}>
-              Sign out
-            </button>
-          </div>
+          )}
+          <button onClick={() => setCollapsed(!collapsed)} style={{
+            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)',
+            width: '30px', height: '30px', borderRadius: '7px', cursor: 'pointer', fontSize: '14px', flexShrink: 0
+          }} title={collapsed ? 'Expand' : 'Collapse'}>
+            {collapsed ? '»' : '«'}
+          </button>
         </div>
 
         {/* Nav */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-          {[
-            { label: '📊 Dashboard', href: '/dashboard', active: true },
-            { label: '💰 Prices', href: '/prices', active: false },
-            { label: '🏗️ Estimator', href: '/estimator', active: false },
-          ].map((item) => (
-            <button
-              key={item.href}
-              onClick={() => navigate(item.href)}
+        <nav style={{ padding: collapsed ? '12px 8px' : '12px', flex: 1 }}>
+          {NAV.map(item => (
+            <button key={item.href} onClick={() => navigate(item.href)} title={item.label}
               style={{
-                padding: '8px 16px',
-                background: item.active ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)',
-                border: item.active ? '1px solid rgba(255,255,255,0.25)' : '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '8px',
-                color: item.active ? 'white' : 'rgba(255,255,255,0.5)',
-                fontSize: '13px', fontWeight: '500',
-                cursor: 'pointer'
-              }}>
-              {item.label}
+                width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                padding: collapsed ? '12px 0' : '11px 14px', marginBottom: '4px',
+                background: item.active ? 'rgba(33,150,243,0.18)' : 'transparent',
+                border: item.active ? '1px solid rgba(33,150,243,0.35)' : '1px solid transparent',
+                borderRadius: '9px', color: item.active ? '#fff' : 'rgba(255,255,255,0.6)',
+                fontSize: '13px', fontWeight: item.active ? '600' : '500', cursor: 'pointer', transition: 'all 0.15s'
+              }}
+              onMouseOver={(e) => { if (!item.active) e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
+              onMouseOut={(e) => { if (!item.active) e.currentTarget.style.background = 'transparent' }}>
+              <span style={{ fontSize: '17px' }}>{item.icon}</span>
+              {!collapsed && <span>{item.label}</span>}
             </button>
           ))}
-        </div>
+        </nav>
 
-        {/* World Clocks */}
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{
-            color: 'rgba(255,255,255,0.35)', fontSize: '10px',
-            fontWeight: '700', letterSpacing: '1.5px',
-            textTransform: 'uppercase', marginBottom: '10px',
-            display: 'flex', alignItems: 'center', gap: '8px'
-          }}>
-            <span>🕐</span> World Clocks
-          </div>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {BUS.map(bu => <WorldClock key={bu.name} {...bu} />)}
-          </div>
-        </div>
-
-        {/* Currency Rates */}
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{
-            color: 'rgba(255,255,255,0.35)', fontSize: '10px',
-            fontWeight: '700', letterSpacing: '1.5px',
-            textTransform: 'uppercase', marginBottom: '10px',
-            display: 'flex', alignItems: 'center', gap: '8px'
-          }}>
-            <span>💱</span> Live Exchange Rates
-            <span style={{
-              fontSize: '9px', color: 'rgba(255,255,255,0.2)',
-              background: 'rgba(255,255,255,0.06)',
-              padding: '2px 6px', borderRadius: '99px'
-            }}>vs PHP · Live</span>
-          </div>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {BUS.map(bu => <CurrencyCard key={bu.name} {...bu} />)}
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{
-            color: 'rgba(255,255,255,0.35)', fontSize: '10px',
-            fontWeight: '700', letterSpacing: '1.5px',
-            textTransform: 'uppercase', marginBottom: '10px',
-            display: 'flex', alignItems: 'center', gap: '8px'
-          }}>
-            <span>📊</span> Database Overview
-          </div>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-            gap: '10px'
-          }}>
+        {/* Stats mini-summary */}
+        {!collapsed && (
+          <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '9px', fontWeight: '700', letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: '8px', paddingLeft: '4px' }}>Database</div>
             {[
-              { icon: '📦', label: 'Total Items', value: stats.items, color: '#2196F3' },
-              { icon: '🏷️', label: 'Categories', value: stats.categories, color: '#4CAF50' },
-              { icon: '🏢', label: 'Suppliers', value: stats.suppliers, color: '#FF9800' },
-              { icon: '🌍', label: 'Business Units', value: 4, color: '#9C27B0' },
-            ].map((stat, i) => (
-              <div key={i} style={{
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '12px', padding: '18px',
-                display: 'flex', alignItems: 'center', gap: '14px'
-              }}>
-                <div style={{
-                  width: '44px', height: '44px',
-                  background: `${stat.color}22`,
-                  border: `1px solid ${stat.color}44`,
-                  borderRadius: '10px',
-                  display: 'flex', alignItems: 'center',
-                  justifyContent: 'center', fontSize: '20px'
-                }}>{stat.icon}</div>
-                <div>
-                  <div style={{ color: 'white', fontSize: '24px', fontWeight: 'bold', lineHeight: 1 }}>
-                    {stat.value}
-                  </div>
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', marginTop: '3px' }}>
-                    {stat.label}
-                  </div>
-                </div>
+              { label: 'Items', value: stats.items, color: '#2196F3' },
+              { label: 'Categories', value: stats.categories, color: '#4CAF50' },
+              { label: 'Suppliers', value: stats.suppliers, color: '#FF9800' },
+            ].map((s, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', borderRadius: '7px', marginBottom: '2px' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'rgba(255,255,255,0.55)', fontSize: '12px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.color }} />{s.label}
+                </span>
+                <span style={{ color: '#fff', fontSize: '13px', fontWeight: '700' }}>{s.value}</span>
               </div>
             ))}
           </div>
-        </div>
+        )}
 
-        {/* Bottom Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-
-          {/* Quick Actions */}
-          <div>
-            <div style={{
-              color: 'rgba(255,255,255,0.35)', fontSize: '10px',
-              fontWeight: '700', letterSpacing: '1.5px',
-              textTransform: 'uppercase', marginBottom: '10px',
-              display: 'flex', alignItems: 'center', gap: '8px'
-            }}>
-              <span>⚡</span> Quick Actions
+        {/* User profile + sign out */}
+        <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: collapsed ? 'center' : 'flex-start', marginBottom: collapsed ? 0 : '10px' }}>
+            <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg,#1565C0,#42a5f5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '14px', fontWeight: '700', flexShrink: 0 }}>
+              {(userName || 'U').charAt(0).toUpperCase()}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            {!collapsed && (
+              <div style={{ minWidth: 0 }}>
+                <div style={{ color: '#fff', fontSize: '12px', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userName}</div>
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userEmail || ''}</div>
+              </div>
+            )}
+          </div>
+          <button onClick={handleSignOut} title="Sign out" style={{
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            padding: '9px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: '8px', color: 'rgba(255,255,255,0.7)', fontSize: '12px', fontWeight: '600', cursor: 'pointer'
+          }}>
+            <span>⏻</span>{!collapsed && <span>Sign out</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* ===== MAIN ===== */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+
+        {/* TOP RIBBON */}
+        <header style={{
+          background: '#fff', borderBottom: '1px solid #e6edf3', padding: '0 28px', height: '64px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          position: 'sticky', top: 0, zIndex: 10, boxShadow: '0 1px 3px rgba(13,33,55,0.04)'
+        }}>
+          <div>
+            <h1 style={{ color: '#0d2137', fontSize: '18px', fontWeight: '700', margin: 0, letterSpacing: '-0.3px' }}>
+              Good day, {userName} 👋
+            </h1>
+            <p style={{ color: '#94a3b8', margin: 0, fontSize: '12px' }}>Dewatering Price &amp; Estimator Tool</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ color: '#94a3b8', fontSize: '10px', fontWeight: '600', letterSpacing: '0.5px' }}>TODAY</div>
+              <div style={{ color: '#0d2137', fontSize: '13px', fontWeight: '600' }}>
+                {new Date().toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* CONTENT */}
+        <main style={{ padding: '24px 28px', flex: 1 }}>
+
+          {/* World Clocks */}
+          <div style={{ marginBottom: '22px' }}>
+            <SectionLabel icon="🕐">World Clocks</SectionLabel>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {BUS.map(bu => <WorldClock key={bu.name} {...bu} />)}
+            </div>
+          </div>
+
+          {/* Currency Rates */}
+          <div style={{ marginBottom: '22px' }}>
+            <SectionLabel icon="💱" extra={
+              <span style={{ fontSize: '9px', color: '#94a3b8', background: '#f1f5f9', padding: '2px 6px', borderRadius: '99px' }}>vs PHP · Live</span>
+            }>Live Exchange Rates</SectionLabel>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {BUS.map(bu => <CurrencyCard key={bu.name} {...bu} />)}
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div style={{ marginBottom: '22px' }}>
+            <SectionLabel icon="📊">Database Overview</SectionLabel>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px' }}>
               {[
-                { icon: '🔍', label: 'Search Prices', href: '/prices', color: '#2196F3' },
-                { icon: '➕', label: 'Add Item', href: '/prices', color: '#4CAF50' },
-                { icon: '🏗️', label: 'Estimator', href: '/estimator', color: '#FF9800' },
-                { icon: '📊', label: 'Rental Calc', href: '/rental', color: '#9C27B0' },
-              ].map((action, i) => (
-                <div key={i}
-                  onClick={() => navigate(action.href)}
-                  style={{
-                    background: 'rgba(255,255,255,0.05)',
-                    border: `1px solid rgba(255,255,255,0.08)`,
-                    borderRadius: '12px', padding: '16px',
-                    cursor: 'pointer', textAlign: 'center'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = `${action.color}15`
-                    e.currentTarget.style.borderColor = `${action.color}44`
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
-                  }}>
-                  <div style={{ fontSize: '24px', marginBottom: '6px' }}>{action.icon}</div>
-                  <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px', fontWeight: '500' }}>
-                    {action.label}
+                { icon: '📦', label: 'Total Items', value: stats.items, color: '#2196F3' },
+                { icon: '🏷️', label: 'Categories', value: stats.categories, color: '#4CAF50' },
+                { icon: '🏢', label: 'Suppliers', value: stats.suppliers, color: '#FF9800' },
+                { icon: '🌍', label: 'Business Units', value: 4, color: '#9C27B0' },
+              ].map((stat, i) => (
+                <div key={i} style={{
+                  background: '#fff', border: '1px solid #e6edf3', borderRadius: '12px', padding: '18px',
+                  display: 'flex', alignItems: 'center', gap: '14px', boxShadow: '0 1px 3px rgba(13,33,55,0.04)'
+                }}>
+                  <div style={{ width: '44px', height: '44px', background: `${stat.color}18`, border: `1px solid ${stat.color}33`, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>{stat.icon}</div>
+                  <div>
+                    <div style={{ color: '#0d2137', fontSize: '24px', fontWeight: 'bold', lineHeight: 1 }}>{stat.value}</div>
+                    <div style={{ color: '#94a3b8', fontSize: '11px', marginTop: '3px' }}>{stat.label}</div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Recent Items */}
-          <div>
-            <div style={{
-              color: 'rgba(255,255,255,0.35)', fontSize: '10px',
-              fontWeight: '700', letterSpacing: '1.5px',
-              textTransform: 'uppercase', marginBottom: '10px',
-              display: 'flex', alignItems: 'center', gap: '8px'
-            }}>
-              <span>🕒</span> Recently Added
+          {/* Bottom Row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+
+            {/* Quick Actions */}
+            <div>
+              <SectionLabel icon="⚡">Quick Actions</SectionLabel>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                {[
+                  { icon: '🔍', label: 'Search Prices', href: '/prices', color: '#2196F3' },
+                  { icon: '➕', label: 'Add Item', href: '/prices', color: '#4CAF50' },
+                  { icon: '🏗️', label: 'Estimator', href: '/estimator', color: '#FF9800' },
+                  { icon: '🛠️', label: 'Rental Calc', href: '/rental', color: '#9C27B0' },
+                ].map((action, i) => (
+                  <div key={i} onClick={() => navigate(action.href)} style={{
+                    background: '#fff', border: '1px solid #e6edf3', borderRadius: '12px', padding: '16px',
+                    cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s', boxShadow: '0 1px 3px rgba(13,33,55,0.04)'
+                  }}
+                    onMouseOver={(e) => { e.currentTarget.style.background = `${action.color}0d`; e.currentTarget.style.borderColor = `${action.color}55` }}
+                    onMouseOut={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e6edf3' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '6px' }}>{action.icon}</div>
+                    <div style={{ color: '#475569', fontSize: '12px', fontWeight: '600' }}>{action.label}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '12px', overflow: 'hidden'
-            }}>
-              {recentItems.length === 0 ? (
-                <div style={{
-                  padding: '24px', textAlign: 'center',
-                  color: 'rgba(255,255,255,0.2)', fontSize: '13px'
-                }}>No items yet</div>
-              ) : recentItems.map((item: any, i) => (
-                <div key={item.id}
-                  onClick={() => navigate('/prices')}
-                  style={{
-                    display: 'flex', alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '11px 16px',
-                    borderBottom: i < recentItems.length - 1
-                      ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                    cursor: 'pointer'
-                  }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{
-                      width: '32px', height: '32px',
-                      background: 'rgba(33,150,243,0.15)',
-                      borderRadius: '8px',
-                      display: 'flex', alignItems: 'center',
-                      justifyContent: 'center', fontSize: '14px'
-                    }}>📦</div>
-                    <div>
-                      <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', fontWeight: '500' }}>
-                        {item.description?.length > 28
-                          ? item.description.substring(0, 28) + '...'
-                          : item.description}
-                      </div>
-                      <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '10px', marginTop: '1px' }}>
-                        {item.categories?.name || 'Uncategorized'}
+
+            {/* Recent Items */}
+            <div>
+              <SectionLabel icon="🕒">Recently Added</SectionLabel>
+              <div style={{ background: '#fff', border: '1px solid #e6edf3', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(13,33,55,0.04)' }}>
+                {recentItems.length === 0 ? (
+                  <div style={{ padding: '24px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>No items yet</div>
+                ) : recentItems.map((item: any, i) => (
+                  <div key={item.id} onClick={() => navigate('/prices')} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 16px',
+                    borderBottom: i < recentItems.length - 1 ? '1px solid #f1f5f9' : 'none', cursor: 'pointer', transition: 'background 0.1s'
+                  }}
+                    onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                    onMouseOut={(e) => e.currentTarget.style.background = '#fff'}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '32px', height: '32px', background: 'rgba(33,150,243,0.12)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>📦</div>
+                      <div>
+                        <div style={{ color: '#0d2137', fontSize: '12px', fontWeight: '600' }}>
+                          {item.description?.length > 28 ? item.description.substring(0, 28) + '...' : item.description}
+                        </div>
+                        <div style={{ color: '#94a3b8', fontSize: '10px', marginTop: '1px' }}>{item.categories?.name || 'Uncategorized'}</div>
                       </div>
                     </div>
+                    <div style={{ color: '#cbd5e1', fontSize: '10px', whiteSpace: 'nowrap' }}>
+                      {new Date(item.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
+                    </div>
                   </div>
-                  <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: '10px', whiteSpace: 'nowrap' }}>
-                    {new Date(item.created_at).toLocaleDateString('en-PH', {
-                      month: 'short', day: 'numeric'
-                    })}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
+        </main>
       </div>
     </div>
   )
