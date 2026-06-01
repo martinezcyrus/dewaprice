@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import EstimatorClient from './EstimatorClient'
 
 export default async function EstimatorPage() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
