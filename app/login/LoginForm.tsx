@@ -34,8 +34,7 @@ export default function LoginForm({ redirectTo, error }: LoginFormProps) {
       return
     }
 
-    router.refresh()
-    router.push(redirectTo || '/dashboard')
+    window.location.href = redirectTo || '/dashboard'
   }
 
   const handleGuestLogin = async () => {
@@ -53,8 +52,7 @@ export default function LoginForm({ redirectTo, error }: LoginFormProps) {
       return
     }
 
-    router.refresh()
-    router.push('/demo')
+   window.location.href = '/demo'
   }
 
   return (
