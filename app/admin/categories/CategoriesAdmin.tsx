@@ -135,42 +135,56 @@ export default function CategoriesAdmin({ userId, initialCategories, userRole }:
 
 const handleMove = async (id: string, direction: 'up' | 'down') => {
     if (!checkGuest('Reordering categories')) return
+    if (saving) return // lock out overlapping clicks
 
-    // Always compute from fresh state, not stale closure
-    setCategories((prev) => {
-      const sorted = prev.filter((c) => c.is_active).sort((a, b) => a.sort_order - b.sort_order)
-      const idx = sorted.findIndex((c) => c.id === id)
-      if (idx === -1) return prev
-      if (direction === 'up' && idx === 0) return prev
-      if (direction === 'down' && idx === sorted.length - 1) return prev
+    const sorted = categories
+      .filter((c) => c.is_active)
+      .sort((a, b) => a.sort_order - b.sort_order)
+    const idx = sorted.findIndex((c) => c.id === id)
+    if (idx === -1) return
+    if (direction === 'up' && idx === 0) return
+    if (direction === 'down' && idx === sorted.length - 1) return
 
-      const swapIdx = direction === 'up' ? idx - 1 : idx + 1
-      const current = sorted[idx]
-      const swap = sorted[swapIdx]
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    const current = sorted[idx]
+    const swap = sorted[swapIdx]
 
-      // Fire updates to DB (async, fire and forget for snappy UI)
-      Promise.all([
-        supabase
-          .from('estimator_categories')
-          .update({ sort_order: swap.sort_order, updated_at: new Date().toISOString() })
-          .eq('id', current.id),
-        supabase
-          .from('estimator_categories')
-          .update({ sort_order: current.sort_order, updated_at: new Date().toISOString() })
-          .eq('id', swap.id),
-      ]).then(([r1, r2]) => {
-        if (r1.error || r2.error) {
-          alert('Error reordering: ' + (r1.error?.message || r2.error?.message))
-        }
-      })
+    setSaving(true)
 
-      // Update local state immediately
-      return prev.map((c) => {
+    // Optimistic, pure state update
+    setCategories((prev) =>
+      prev.map((c) => {
         if (c.id === current.id) return { ...c, sort_order: swap.sort_order }
         if (c.id === swap.id) return { ...c, sort_order: current.sort_order }
         return c
       })
-    })
+    )
+
+    // DB write happens exactly once, outside the updater
+    const [r1, r2] = await Promise.all([
+      supabase
+        .from('estimator_categories')
+        .update({ sort_order: swap.sort_order, updated_at: new Date().toISOString() })
+        .eq('id', current.id),
+      supabase
+        .from('estimator_categories')
+        .update({ sort_order: current.sort_order, updated_at: new Date().toISOString() })
+        .eq('id', swap.id),
+    ])
+
+    // Revert UI if the DB rejected it
+    if (r1.error || r2.error) {
+      setCategories((prev) =>
+        prev.map((c) => {
+          if (c.id === current.id) return { ...c, sort_order: current.sort_order }
+          if (c.id === swap.id) return { ...c, sort_order: swap.sort_order }
+          return c
+        })
+      )
+      alert('Error reordering: ' + (r1.error?.message || r2.error?.message))
+    }
+
+    setSaving(false)
   }
 
   const activeCategories = categories
