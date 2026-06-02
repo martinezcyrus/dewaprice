@@ -133,7 +133,47 @@ export default function CategoriesAdmin({ userId, initialCategories, userRole }:
     setSaving(false)
   }
 
-  const activeCategories = categories.filter((c) => c.is_active)
+  const handleMove = async (id: string, direction: 'up' | 'down') => {
+    if (!checkGuest('Reordering categories')) return
+    const sorted = [...activeCategories].sort((a, b) => a.sort_order - b.sort_order)
+    const idx = sorted.findIndex((c) => c.id === id)
+    if (idx === -1) return
+    if (direction === 'up' && idx === 0) return
+    if (direction === 'down' && idx === sorted.length - 1) return
+
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    const current = sorted[idx]
+    const swap = sorted[swapIdx]
+
+    setSaving(true)
+    // Swap sort_order values
+    const [r1, r2] = await Promise.all([
+      supabase
+        .from('estimator_categories')
+        .update({ sort_order: swap.sort_order, updated_at: new Date().toISOString() })
+        .eq('id', current.id),
+      supabase
+        .from('estimator_categories')
+        .update({ sort_order: current.sort_order, updated_at: new Date().toISOString() })
+        .eq('id', swap.id),
+    ])
+    if (r1.error || r2.error) {
+      alert('Error reordering: ' + (r1.error?.message || r2.error?.message))
+    } else {
+      setCategories(
+        categories.map((c) => {
+          if (c.id === current.id) return { ...c, sort_order: swap.sort_order }
+          if (c.id === swap.id) return { ...c, sort_order: current.sort_order }
+          return c
+        })
+      )
+    }
+    setSaving(false)
+  }
+
+  const activeCategories = categories
+    .filter((c) => c.is_active)
+    .sort((a, b) => a.sort_order - b.sort_order)
 
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f8', fontFamily: 'Arial, sans-serif' }}>
@@ -292,7 +332,7 @@ export default function CategoriesAdmin({ userId, initialCategories, userRole }:
               color: '#666',
             }}
           >
-            <strong>{activeCategories.length}</strong> active categories · Click ✏️ to edit, 🗑️ to delete
+            <strong>{activeCategories.length}</strong> active categories · Use ⬆️ ⬇️ to reorder · ✏️ to edit · 🗑️ to delete
           </div>
 
           {activeCategories.length === 0 ? (
@@ -326,10 +366,13 @@ export default function CategoriesAdmin({ userId, initialCategories, userRole }:
                   </tr>
                 </thead>
                 <tbody>
-                  {activeCategories.map((cat) => (
+                  {activeCategories.map((cat, idx) => (
                     <CategoryRow
                       key={cat.id}
                       category={cat}
+                      isFirst={idx === 0}
+                      isLast={idx === activeCategories.length - 1}
+                      displayPosition={idx + 1}
                       isEditing={editingId === cat.id}
                       onStartEdit={() => {
                         if (!checkGuest('Editing categories')) return
@@ -338,6 +381,8 @@ export default function CategoriesAdmin({ userId, initialCategories, userRole }:
                       onCancelEdit={() => setEditingId(null)}
                       onSave={(updates) => handleUpdate(cat.id, updates)}
                       onDelete={() => handleDelete(cat.id, cat.name)}
+                      onMoveUp={() => handleMove(cat.id, 'up')}
+                      onMoveDown={() => handleMove(cat.id, 'down')}
                       saving={saving}
                       inputStyle={inputStyle}
                     />
@@ -372,22 +417,32 @@ export default function CategoriesAdmin({ userId, initialCategories, userRole }:
 // ─── ROW COMPONENT ───
 interface RowProps {
   category: Category
+  isFirst: boolean
+  isLast: boolean
+  displayPosition: number
   isEditing: boolean
   onStartEdit: () => void
   onCancelEdit: () => void
   onSave: (updates: Partial<Category>) => void
   onDelete: () => void
+  onMoveUp: () => void
+  onMoveDown: () => void
   saving: boolean
   inputStyle: React.CSSProperties
 }
 
 function CategoryRow({
   category,
+  isFirst,
+  isLast,
+  displayPosition,
   isEditing,
   onStartEdit,
   onCancelEdit,
   onSave,
   onDelete,
+  onMoveUp,
+  onMoveDown,
   saving,
   inputStyle,
 }: RowProps) {
@@ -401,7 +456,7 @@ function CategoryRow({
   if (isEditing) {
     return (
       <tr style={{ background: '#fffbf0', borderBottom: '1px solid #f0f0f0' }}>
-        <td style={{ padding: '8px 14px', color: '#999' }}>{category.sort_order}</td>
+        <td style={{ padding: '8px 14px', color: '#999' }}>{displayPosition}</td>
         <td style={{ padding: '8px 14px' }}>
           <input
             type="text"
@@ -475,7 +530,47 @@ function CategoryRow({
 
   return (
     <tr style={{ borderBottom: '1px solid #f0f0f0', background: 'white' }}>
-      <td style={{ padding: '10px 14px', color: '#999', fontWeight: '600' }}>{category.sort_order}</td>
+      <td style={{ padding: '10px 14px', color: '#999', fontWeight: '600' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ minWidth: '20px' }}>{displayPosition}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <button
+              onClick={onMoveUp}
+              disabled={isFirst || saving}
+              title="Move up"
+              style={{
+                background: isFirst ? '#f5f5f5' : '#E3F2FD',
+                color: isFirst ? '#ccc' : '#1565C0',
+                border: 'none',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                fontSize: '10px',
+                cursor: isFirst ? 'not-allowed' : 'pointer',
+                lineHeight: '1',
+              }}
+            >
+              ▲
+            </button>
+            <button
+              onClick={onMoveDown}
+              disabled={isLast || saving}
+              title="Move down"
+              style={{
+                background: isLast ? '#f5f5f5' : '#E3F2FD',
+                color: isLast ? '#ccc' : '#1565C0',
+                border: 'none',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                fontSize: '10px',
+                cursor: isLast ? 'not-allowed' : 'pointer',
+                lineHeight: '1',
+              }}
+            >
+              ▼
+            </button>
+          </div>
+        </div>
+      </td>
       <td style={{ padding: '10px 14px' }}>
         <span
           style={{
