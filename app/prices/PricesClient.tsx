@@ -54,6 +54,7 @@ interface Props {
 
 export default function PricesClient({ initialItems, initialCategories, userId, userEmail }: Props) {
   const supabase = createClient()
+  const isDemo = userEmail === 'guest@dewaprice.app'
 
   const [items, setItems] = useState<any[]>(initialItems)
   const [categories] = useState<any[]>(initialCategories)
@@ -69,6 +70,7 @@ export default function PricesClient({ initialItems, initialCategories, userId, 
   const [activeTab, setActiveTab] = useState('philippines')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [showDemoPopup, setShowDemoPopup] = useState(false)
   const [newItem, setNewItem] = useState({
     description: '', full_description: '', category_id: '', unit: '', base_price: '',
     supplier: '', supplier_contact: '', notes: '', image_url: '', business_unit_id: '1',
@@ -108,6 +110,7 @@ export default function PricesClient({ initialItems, initialCategories, userId, 
   }
 
   const handleAddItem = async () => {
+    if (isDemo) { setShowDemoPopup(true); return }
     if (!newItem.description || !newItem.base_price) { alert('Please fill in description and price.'); return }
     setSaving(true)
     const { error } = await supabase.from('items').insert([{
@@ -129,6 +132,7 @@ export default function PricesClient({ initialItems, initialCategories, userId, 
   }
 
   const handleEditSave = async () => {
+    if (isDemo) { setShowDemoPopup(true); return }
     setSaving(true)
     const { error } = await supabase.from('items').update({
       description: selectedItem.description, full_description: selectedItem.full_description,
@@ -144,6 +148,7 @@ export default function PricesClient({ initialItems, initialCategories, userId, 
   }
 
   const handleDelete = async (id: number) => {
+    if (isDemo) { setShowDemoPopup(true); return }
     if (!confirm('Delete this item?')) return
     await supabase.from('items').delete().eq('id', id)
     setSelectedItem(null)
@@ -170,7 +175,7 @@ export default function PricesClient({ initialItems, initialCategories, userId, 
   const getBUFlag = (id: number) => ({ 1: '🇵🇭', 2: '🇸🇦', 3: '🇨🇦', 4: '🇦🇪' } as Record<number, string>)[id] || '🌍'
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f0f4f8', fontFamily: 'Arial, sans-serif' }}>
+    <div style={{ background: '#f0f4f8', fontFamily: 'Arial, sans-serif' }}>
       <div style={{ padding: '28px 32px' }}>
 
         {/* HEADER */}
@@ -179,11 +184,12 @@ export default function PricesClient({ initialItems, initialCategories, userId, 
             <h1 style={{ fontSize: '22px', fontWeight: '600', color: '#0d2137', margin: '0 0 4px 0' }}>💰 Price Database</h1>
             <p style={{ color: '#666', fontSize: '13px', margin: 0 }}>
               {items.length} items · Click any row to view details
+              {isDemo && <span style={{ marginLeft: '10px', background: '#fef3c7', color: '#92400e', padding: '2px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: '700' }}>👁️ Demo — Read Only</span>}
             </p>
           </div>
-          <button onClick={() => setShowAddForm(!showAddForm)}
-            style={{ background: showAddForm ? '#e0e0e0' : 'linear-gradient(135deg, #1565C0, #0288D1)', color: showAddForm ? '#333' : 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
-            {showAddForm ? '✕ Cancel' : '➕ Add Item'}
+          <button onClick={() => { if (isDemo) { setShowDemoPopup(true); return } setShowAddForm(!showAddForm) }}
+            style={{ background: isDemo ? '#cbd5e1' : (showAddForm ? '#e0e0e0' : 'linear-gradient(135deg, #1565C0, #0288D1)'), color: isDemo ? '#64748b' : (showAddForm ? '#333' : 'white'), border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: isDemo ? 'not-allowed' : 'pointer', opacity: isDemo ? 0.75 : 1 }}>
+            {isDemo ? '🔒 Add Item' : (showAddForm ? '✕ Cancel' : '➕ Add Item')}
           </button>
         </div>
 
@@ -207,7 +213,7 @@ export default function PricesClient({ initialItems, initialCategories, userId, 
           <div style={{ background: 'white', borderRadius: '0 12px 12px 12px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)', overflow: 'visible' }}>
 
             {/* ADD FORM */}
-            {showAddForm && (
+            {showAddForm && !isDemo && (
               <div style={{ padding: '24px', background: '#E3F2FD', borderBottom: '1px solid #bbdefb', borderRadius: '0 12px 0 0' }}>
                 <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#0d2137', marginBottom: '16px', marginTop: 0 }}>➕ Add New Item</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
@@ -381,8 +387,8 @@ export default function PricesClient({ initialItems, initialCategories, userId, 
                         <td style={{ padding: '10px 14px', color: '#aaa', fontSize: '11px', whiteSpace: 'nowrap' as const }}>{formatDate(item.created_at)}</td>
                         <td style={{ padding: '10px 14px' }} onClick={(e) => e.stopPropagation()}>
                           <div style={{ display: 'flex', gap: '4px' }}>
-                            <button onClick={() => { setSelectedItem(item); setEditMode(true) }} style={{ background: '#E3F2FD', color: '#1565C0', border: 'none', padding: '6px 10px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>✏️</button>
-                            <button onClick={() => handleDelete(item.id)} style={{ background: '#ffebee', color: '#c62828', border: 'none', padding: '6px 10px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>🗑️</button>
+                            <button onClick={() => { if (isDemo) { setShowDemoPopup(true); return } setSelectedItem(item); setEditMode(true) }} title={isDemo ? 'Demo mode — locked' : 'Edit'} style={{ background: isDemo ? '#f1f5f9' : '#E3F2FD', color: isDemo ? '#94a3b8' : '#1565C0', border: 'none', padding: '6px 10px', borderRadius: '6px', fontSize: '13px', cursor: isDemo ? 'not-allowed' : 'pointer' }}>{isDemo ? '🔒' : '✏️'}</button>
+                            <button onClick={() => handleDelete(item.id)} title={isDemo ? 'Demo mode — locked' : 'Delete'} style={{ background: isDemo ? '#f1f5f9' : '#ffebee', color: isDemo ? '#94a3b8' : '#c62828', border: 'none', padding: '6px 10px', borderRadius: '6px', fontSize: '13px', cursor: isDemo ? 'not-allowed' : 'pointer' }}>{isDemo ? '🔒' : '🗑️'}</button>
                           </div>
                         </td>
                       </tr>
@@ -446,8 +452,8 @@ export default function PricesClient({ initialItems, initialCategories, userId, 
                   {selectedItem.updated_at && selectedItem.updated_at !== selectedItem.created_at && <div>✏️ Last edited: {formatDate(selectedItem.updated_at)}</div>}
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={() => setEditMode(true)} style={{ background: '#1565C0', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>✏️ Edit Item</button>
-                  <button onClick={() => handleDelete(selectedItem.id)} style={{ background: '#ffebee', color: '#c62828', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>🗑️ Delete</button>
+                  <button onClick={() => { if (isDemo) { setShowDemoPopup(true); return } setEditMode(true) }} style={{ background: isDemo ? '#cbd5e1' : '#1565C0', color: isDemo ? '#64748b' : 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: isDemo ? 'not-allowed' : 'pointer' }}>{isDemo ? '🔒 Edit Item' : '✏️ Edit Item'}</button>
+                  <button onClick={() => handleDelete(selectedItem.id)} style={{ background: isDemo ? '#f1f5f9' : '#ffebee', color: isDemo ? '#94a3b8' : '#c62828', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', cursor: isDemo ? 'not-allowed' : 'pointer' }}>{isDemo ? '🔒 Delete' : '🗑️ Delete'}</button>
                   <button onClick={() => setSelectedItem(null)} style={{ background: '#f0f0f0', color: '#333', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', marginLeft: 'auto' }}>Close</button>
                 </div>
               </div>
@@ -489,6 +495,23 @@ export default function PricesClient({ initialItems, initialCategories, userId, 
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* DEMO MODE POPUP */}
+      {showDemoPopup && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }} onClick={() => setShowDemoPopup(false)}>
+          <div style={{ background: 'white', borderRadius: '16px', padding: '32px', width: '100%', maxWidth: '400px', textAlign: 'center', boxShadow: '0 24px 64px rgba(0,0,0,0.25)' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: '44px', marginBottom: '12px' }}>🔒</div>
+            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#0d2137', margin: '0 0 8px 0' }}>You're in Demo Mode</h2>
+            <p style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.6', margin: '0 0 24px 0' }}>
+              Adding, editing, and deleting items are disabled in demo mode. Request admin access to make changes to the database.
+            </p>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+              <a href="mailto:cyrusjaysonm@gmail.com?subject=DewaPrice%20Admin%20Access%20Request" style={{ background: 'linear-gradient(135deg, #1565C0, #0288D1)', color: 'white', textDecoration: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: '600' }}>Request Access</a>
+              <button onClick={() => setShowDemoPopup(false)} style={{ background: '#f0f0f0', color: '#333', border: 'none', padding: '10px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>Close</button>
+            </div>
           </div>
         </div>
       )}
