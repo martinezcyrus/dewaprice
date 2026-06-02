@@ -118,6 +118,7 @@ export default function LayoutClient({ user, profile, children }: Props) {
     { href: '/prices', label: '💰 Prices' },
     { href: '/estimator', label: '🏗️ Estimator' },
     { href: '/rental', label: '🔧 Rental' },
+    { href: '/admin/categories', label: '⚙️ Categories' },
     ...(isAdmin ? [{ href: '/admin', label: '⚙️ Admin' }] : []),
   ]
 
