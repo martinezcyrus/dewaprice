@@ -16,6 +16,7 @@ const NAV = [
   { icon: '💰', label: 'Prices', href: '/prices' },
   { icon: '🏗️', label: 'Estimator', href: '/estimator' },
   { icon: '🛠️', label: 'Rental', href: '/rental' },
+  { icon: '⚙️', label: 'Categories', href: '/admin/categories' },
 ]
 
 export default function Shell({ user, profile, children }: ShellProps) {
