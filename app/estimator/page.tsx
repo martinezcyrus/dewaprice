@@ -32,7 +32,6 @@ export default async function EstimatorPage() {
         userId={user.id}
         initialPrices={prices || []}
         initialEstimates={savedEstimates || []}
-        initialCategories={categories || []}
       />
     </AppShell>
   )
