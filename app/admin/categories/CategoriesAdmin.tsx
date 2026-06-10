@@ -134,7 +134,7 @@ export default function CategoriesAdmin({ userId, initialCategories, userRole, e
     setSaving(false)
   }
 
-const handleMove = async (id: string, direction: 'up' | 'down') => {
+  const handleMove = async (id: string, direction: 'up' | 'down') => {
     if (!checkGuest('Reordering categories')) return
     if (saving) return // lock out overlapping clicks
 
@@ -192,7 +192,7 @@ const handleMove = async (id: string, direction: 'up' | 'down') => {
     .filter((c) => c.is_active)
     .sort((a, b) => a.sort_order - b.sort_order)
 
- return (
+  return (
     <div style={embedded ? { fontFamily: 'Arial, sans-serif' } : { minHeight: '100vh', background: '#f0f4f8', fontFamily: 'Arial, sans-serif' }}>
       <div style={embedded ? {} : { maxWidth: '1200px', margin: '0 auto', padding: '28px 24px' }}>
         {/* HEADER */}
@@ -216,15 +216,6 @@ const handleMove = async (id: string, direction: 'up' | 'down') => {
               </p>
             </div>
           )}
-        >
-          <div>
-            <h1 style={{ fontSize: '22px', fontWeight: '600', color: '#0d2137', margin: '0 0 4px 0' }}>
-              ⚙️ Estimator Categories
-            </h1>
-            <p style={{ color: '#666', fontSize: '13px', margin: 0 }}>
-              Manage cost categories that appear in the estimator and BOQ
-            </p>
-          </div>
           <button
             onClick={() => {
               if (!checkGuest('Adding categories')) return
@@ -439,10 +430,6 @@ const handleMove = async (id: string, direction: 'up' | 'down') => {
             keep their original categories even after deletion. New estimates won't see deleted categories.
           </div>
         )}
-        >
-          <strong>📌 Note:</strong> Deleting a category is a <strong>soft delete</strong> — old saved estimates will
-          keep their original categories even after deletion. New estimates won't see deleted categories.
-        </div>
       </div>
     </div>
   )
