@@ -199,12 +199,23 @@ const handleMove = async (id: string, direction: 'up' | 'down') => {
         <div
           style={{
             display: 'flex',
-            justifyContent: 'space-between',
+            justifyContent: embedded ? 'flex-end' : 'space-between',
             alignItems: 'center',
-            marginBottom: '24px',
+            marginBottom: embedded ? '16px' : '24px',
             flexWrap: 'wrap',
             gap: '12px',
           }}
+        >
+          {!embedded && (
+            <div>
+              <h1 style={{ fontSize: '22px', fontWeight: '600', color: '#0d2137', margin: '0 0 4px 0' }}>
+                ⚙️ Estimator Categories
+              </h1>
+              <p style={{ color: '#666', fontSize: '13px', margin: 0 }}>
+                Manage cost categories that appear in the estimator and BOQ
+              </p>
+            </div>
+          )}
         >
           <div>
             <h1 style={{ fontSize: '22px', fontWeight: '600', color: '#0d2137', margin: '0 0 4px 0' }}>
@@ -411,17 +422,23 @@ const handleMove = async (id: string, direction: 'up' | 'down') => {
         </div>
 
         {/* INFO BOX */}
-        <div
-          style={{
-            marginTop: '20px',
-            background: '#FFF8E1',
-            border: '1px solid #FFE082',
-            borderRadius: '10px',
-            padding: '14px 18px',
-            fontSize: '13px',
-            color: '#5D4037',
-            lineHeight: '1.7',
-          }}
+        {!embedded && (
+          <div
+            style={{
+              marginTop: '20px',
+              background: '#FFF8E1',
+              border: '1px solid #FFE082',
+              borderRadius: '10px',
+              padding: '14px 18px',
+              fontSize: '13px',
+              color: '#5D4037',
+              lineHeight: '1.7',
+            }}
+          >
+            <strong>📌 Note:</strong> Deleting a category is a <strong>soft delete</strong> — old saved estimates will
+            keep their original categories even after deletion. New estimates won't see deleted categories.
+          </div>
+        )}
         >
           <strong>📌 Note:</strong> Deleting a category is a <strong>soft delete</strong> — old saved estimates will
           keep their original categories even after deletion. New estimates won't see deleted categories.
