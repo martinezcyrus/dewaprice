@@ -21,9 +21,10 @@ interface Props {
   userId: string
   initialCategories: Category[]
   userRole: string
+  embedded?: boolean
 }
 
-export default function CategoriesAdmin({ userId, initialCategories, userRole }: Props) {
+export default function CategoriesAdmin({ userId, initialCategories, userRole, embedded = false }: Props) {
   const supabase = createClient()
   const { isGuest, showPermissionModal } = useGuest()
 
@@ -191,9 +192,9 @@ const handleMove = async (id: string, direction: 'up' | 'down') => {
     .filter((c) => c.is_active)
     .sort((a, b) => a.sort_order - b.sort_order)
 
-  return (
-    <div style={{ minHeight: '100vh', background: '#f0f4f8', fontFamily: 'Arial, sans-serif' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '28px 24px' }}>
+ return (
+    <div style={embedded ? { fontFamily: 'Arial, sans-serif' } : { minHeight: '100vh', background: '#f0f4f8', fontFamily: 'Arial, sans-serif' }}>
+      <div style={embedded ? {} : { maxWidth: '1200px', margin: '0 auto', padding: '28px 24px' }}>
         {/* HEADER */}
         <div
           style={{
