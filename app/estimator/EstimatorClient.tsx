@@ -11,6 +11,7 @@ interface SiteInputs {
   aquiferThickness: string; projectDuration: string; riskLevel: string
   projectName: string; location: string; preparedBy: string
   dieselLitersPerHrPerPump: string; operatingHrsPerDay: string; dieselPricePerLiter: string
+  groundElevation: string
 }
 
 interface CategoryMarkups {
@@ -70,69 +71,205 @@ const SECTION_COLORS: Record<string, string> = {
   '4': '#6A1B9A', '5': '#E65100', '6': '#00695C', '7': '#455A64',
 }
 
+const SOIL_COLORS: Record<string, string> = {
+  'Gravel': '#C8B88A', 'Coarse sand': '#D4B483', 'Medium sand': '#C9A96E',
+  'Fine sand': '#BFA05E', 'Silty sand': '#A89070', 'Silt': '#9E8B7A', 'Clay': '#8B7A6A',
+}
+
 // ── CROSS SECTION SVG ──
-function CrossSection({ inputs }: { inputs: SiteInputs }) {
+// Draws geology, water table, excavation, an elevation ruler (left), and —
+// when a calculated `method` is supplied — the method-specific dewatering system.
+function CrossSection({ inputs, results }: { inputs: SiteInputs; results?: CalcResults | null }) {
   const W = parseFloat(inputs.excavationWidth) || 20
   const D = parseFloat(inputs.excavationDepth) || 6
   const GWT = parseFloat(inputs.groundwaterDepth) || 1.5
   const DD = parseFloat(inputs.requiredDrawdown) || 0.5
   const soil = inputs.soilType || 'Medium sand'
-  const svgW = 340, svgH = 380
-  const lm = 72, rm = 80, tm = 50, bm = 30
-  const drawW = svgW - lm - rm, drawH = svgH - tm - bm
-  const totalDepth = Math.max(D + 4, 10), scale = drawH / totalDepth
-  const gx = lm, gy = tm
-  const gwtY = gy + Math.min(GWT, D - 0.5) * scale
-  const formY = gy + D * scale
-  const drawdownY = formY + DD * scale
-  const aquiferY = gy + (D + 3) * scale
-  const excW = drawW * 0.55, excX = gx + (drawW - excW) / 2
-  const soilColor = ({ 'Gravel': '#C8B88A', 'Coarse sand': '#D4B483', 'Medium sand': '#C9A96E', 'Fine sand': '#BFA05E', 'Silty sand': '#A89070', 'Silt': '#9E8B7A', 'Clay': '#8B7A6A' } as Record<string,string>)[soil] || '#C9A96E'
+  const soilColor = SOIL_COLORS[soil] || '#C9A96E'
+
+  const groundRL = parseFloat(inputs.groundElevation)
+  const hasRL = !isNaN(groundRL)
+  const method = results?.method
+
+  // Depth (below ground) of the deepest system element — used to size the ruler.
+  let wellBottomDepth = 0
+  let systemDepth = D + 4
+  if (results) {
+    if (method === 'Deep Wells' || method === 'Eductor Wells') {
+      wellBottomDepth = results.wellDepth || D + results.drawdown + 3
+      systemDepth = Math.max(systemDepth, wellBottomDepth + 2)
+    } else if (method === 'Wellpoint System') {
+      wellBottomDepth = D + DD + 1.5
+      systemDepth = Math.max(systemDepth, wellBottomDepth + 2)
+    } else if (method === 'Sump Pumping' || method === 'Open Cut Dewatering') {
+      wellBottomDepth = D + 1
+    }
+  }
+  const totalDepth = Math.max(systemDepth, 10)
+
+  // ── geometry ──
+  const svgW = 380, svgH = 400
+  const axisX = 46            // vertical ruler line x
+  const gx = 56               // drawing area left
+  const rm = 76               // right margin (for level tags)
+  const tm = 44, bm = 38
+  const drawW = svgW - gx - rm
+  const drawH = svgH - tm - bm
+  const gy = tm               // y at ground level (depth 0)
+  const scale = drawH / totalDepth
+
+  const yAt = (d: number) => gy + d * scale
+  const fmtVal = (d: number) => (hasRL ? (groundRL - d).toFixed(1) : d === 0 ? '0.0' : `-${d.toFixed(1)}`)
+
+  // key vertical positions
+  const gwtY = yAt(Math.min(GWT, D - 0.3))
+  const formY = yAt(D)
+  const drawdownY = yAt(D + DD)
+  const wellBottomY = wellBottomDepth > 0 ? yAt(wellBottomDepth) : 0
+
+  // excavation box, centred
+  const excW = drawW * 0.5
+  const excX = gx + (drawW - excW) / 2
+
+  // ── ruler ticks ──
+  const tickStep = totalDepth > 16 ? 4 : totalDepth > 8 ? 2 : 1
+  const ticks: number[] = []
+  for (let d = 0; d <= totalDepth + 0.001; d += tickStep) ticks.push(d)
+
+  // ── key levels (highlighted on ruler + tagged on right) ──
+  const levels: { d: number; label: string; color: string }[] = [
+    { d: 0, label: 'GL', color: '#333' },
+    { d: Math.min(GWT, D - 0.3), label: 'GWT', color: '#1565C0' },
+    { d: D, label: 'EXC', color: '#8B6914' },
+  ]
+  if (method) levels.push({ d: D + DD, label: 'DWL', color: '#00897B' })
+  if (wellBottomDepth > 0 && (method === 'Deep Wells' || method === 'Eductor Wells'))
+    levels.push({ d: wellBottomDepth, label: 'WELL', color: '#2E7D32' })
+
+  const nearLevel = (d: number) => levels.some((l) => Math.abs(l.d - d) < tickStep * 0.45)
+
   return (
     <svg width="100%" viewBox={`0 0 ${svgW} ${svgH}`} style={{ display: 'block' }}>
       <defs>
         <pattern id="cs-soil" width="10" height="10" patternUnits="userSpaceOnUse">
-          <circle cx="2" cy="2" r="1" fill={soilColor} opacity="0.5"/>
-          <circle cx="7" cy="7" r="1" fill={soilColor} opacity="0.4"/>
+          <circle cx="2" cy="2" r="1" fill={soilColor} opacity="0.5" />
+          <circle cx="7" cy="7" r="1" fill={soilColor} opacity="0.4" />
+        </pattern>
+        <pattern id="cs-screen" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="4" stroke="#2E7D32" strokeWidth="0.8" />
         </pattern>
         <marker id="cs-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </marker>
       </defs>
-      <rect x={gx} y={gy} width={drawW} height={gwtY-gy} fill={soilColor} opacity="0.4"/>
-      <rect x={gx} y={gy} width={drawW} height={gwtY-gy} fill="url(#cs-soil)"/>
-      <rect x={gx} y={gwtY} width={drawW} height={formY-gwtY} fill="#4A90D9" opacity="0.12"/>
-      <rect x={gx} y={gwtY} width={drawW} height={formY-gwtY} fill={soilColor} opacity="0.35"/>
-      <rect x={gx} y={gwtY} width={drawW} height={formY-gwtY} fill="url(#cs-soil)"/>
-      <rect x={gx} y={formY} width={drawW} height={aquiferY-formY} fill="#4A90D9" opacity="0.2"/>
-      <rect x={gx} y={aquiferY} width={drawW} height={gy+drawH-aquiferY} fill={soilColor} opacity="0.5"/>
-      <rect x={excX} y={gy} width={excW} height={formY-gy} fill="white" opacity="0.96"/>
-      <line x1={excX} y1={gy} x2={excX} y2={formY} stroke="#555" strokeWidth="2" strokeDasharray="6 3" opacity="0.6"/>
-      <line x1={excX+excW} y1={gy} x2={excX+excW} y2={formY} stroke="#555" strokeWidth="2" strokeDasharray="6 3" opacity="0.6"/>
-      <line x1={gx} y1={gy} x2={gx+drawW} y2={gy} stroke="#333" strokeWidth="2" opacity="0.8"/>
-      <rect x={gx} y={gy-7} width={drawW} height={7} fill="#5D8A3C" opacity="0.65" rx="2"/>
-      <line x1={gx} y1={formY} x2={gx+drawW} y2={formY} stroke="#8B6914" strokeWidth="1.5" strokeDasharray="8 4" opacity="0.7"/>
-      <line x1={gx} y1={gwtY} x2={gx+drawW} y2={gwtY} stroke="#1565C0" strokeWidth="1.5" strokeDasharray="10 5" opacity="0.9"/>
-      {drawdownY < aquiferY && <line x1={gx} y1={drawdownY} x2={gx+drawW} y2={drawdownY} stroke="#00897B" strokeWidth="1.5" strokeDasharray="5 5" opacity="0.8"/>}
-      {[0.15,0.35,0.65,0.85].map((frac,i)=>{
-        const wx=gx+frac*drawW, wy=gwtY+(formY-gwtY)*0.5
-        if(wx>excX-6&&wx<excX+excW+6) return null
-        return <ellipse key={i} cx={wx} cy={wy} rx="3.5" ry="4.5" fill="#4A90D9" opacity="0.35"/>
-      })}
-      <line x1={excX} y1={tm-8} x2={excX+excW} y2={tm-8} stroke="#666" strokeWidth="1" markerStart="url(#cs-arr)" markerEnd="url(#cs-arr)"/>
-      <text x={excX+excW/2} y={tm-13} textAnchor="middle" fontSize="10" fill="#555" fontFamily="Arial">W: {W}m</text>
-      <line x1={excX+excW+8} y1={gy} x2={excX+excW+8} y2={formY} stroke="#666" strokeWidth="1" markerStart="url(#cs-arr)" markerEnd="url(#cs-arr)"/>
-      <text x={excX+excW+14} y={gy+(formY-gy)/2} fontSize="10" fill="#555" fontFamily="Arial" dominantBaseline="central">D: {D}m</text>
-      {[{y:gy,label:'GL',color:'#333'},{y:gwtY,label:`GWT`,color:'#1565C0'},{y:formY,label:'FGL',color:'#8B6914'},...(drawdownY<aquiferY?[{y:drawdownY,label:'DWL',color:'#00897B'}]:[])].map((item,i)=>(
-        <g key={i}>
-          <line x1={gx-4} y1={item.y} x2={gx} y2={item.y} stroke={item.color} strokeWidth="0.5"/>
-          <text x={gx-6} y={item.y+1} textAnchor="end" fontSize="9.5" fill={item.color} fontFamily="Arial" dominantBaseline="central">{item.label}</text>
+
+      {/* ── geology ── */}
+      <rect x={gx} y={gy} width={drawW} height={gwtY - gy} fill={soilColor} opacity="0.4" />
+      <rect x={gx} y={gy} width={drawW} height={gwtY - gy} fill="url(#cs-soil)" />
+      <rect x={gx} y={gwtY} width={drawW} height={gy + drawH - gwtY} fill="#4A90D9" opacity="0.14" />
+      <rect x={gx} y={gwtY} width={drawW} height={gy + drawH - gwtY} fill={soilColor} opacity="0.34" />
+      <rect x={gx} y={gwtY} width={drawW} height={gy + drawH - gwtY} fill="url(#cs-soil)" />
+
+      {/* ground surface */}
+      <rect x={gx} y={gy - 7} width={drawW} height={7} fill="#5D8A3C" opacity="0.65" rx="2" />
+      <line x1={gx} y1={gy} x2={gx + drawW} y2={gy} stroke="#333" strokeWidth="2" opacity="0.8" />
+
+      {/* formation / max excavation level */}
+      <line x1={gx} y1={formY} x2={gx + drawW} y2={formY} stroke="#8B6914" strokeWidth="1.5" strokeDasharray="8 4" opacity="0.7" />
+
+      {/* water table — flat when no method, drawn-down cone when a method is active */}
+      {method ? (
+        <path
+          d={`M ${gx} ${gwtY} Q ${gx + (excX - gx) * 0.6} ${gwtY} ${excX} ${drawdownY} L ${excX + excW} ${drawdownY} Q ${excX + excW + (gx + drawW - (excX + excW)) * 0.4} ${gwtY} ${gx + drawW} ${gwtY}`}
+          fill="none" stroke="#1565C0" strokeWidth="1.5" strokeDasharray="6 3" opacity="0.9"
+        />
+      ) : (
+        <line x1={gx} y1={gwtY} x2={gx + drawW} y2={gwtY} stroke="#1565C0" strokeWidth="1.5" strokeDasharray="10 5" opacity="0.9" />
+      )}
+
+      {/* excavation */}
+      <rect x={excX} y={gy} width={excW} height={formY - gy} fill="white" opacity="0.96" />
+      <line x1={excX} y1={gy} x2={excX} y2={formY} stroke="#555" strokeWidth="2" strokeDasharray="6 3" opacity="0.6" />
+      <line x1={excX + excW} y1={gy} x2={excX + excW} y2={formY} stroke="#555" strokeWidth="2" strokeDasharray="6 3" opacity="0.6" />
+      <line x1={excX} y1={formY} x2={excX + excW} y2={formY} stroke="#555" strokeWidth="2" opacity="0.6" />
+
+      {/* ── method-specific equipment ── */}
+      {method === 'Wellpoint System' && (
+        <g>
+          {/* header pipe */}
+          <line x1={excX - 18} y1={gy - 6} x2={excX + excW + 18} y2={gy - 6} stroke="#1565C0" strokeWidth="3" strokeLinecap="round" />
+          {[excX - 14, excX + excW + 14].map((rx, i) => (
+            <g key={i}>
+              <line x1={rx} y1={gy - 6} x2={rx} y2={wellBottomY} stroke="#1565C0" strokeWidth="2" />
+              <rect x={rx - 2} y={wellBottomY - 12} width="4" height="12" fill="#0288D1" />
+            </g>
+          ))}
+        </g>
+      )}
+
+      {(method === 'Deep Wells' || method === 'Eductor Wells') && (
+        <g>
+          {[excX - 20, excX + excW + 20].map((wx, i) => (
+            <g key={i}>
+              <rect x={wx - 5} y={gy} width="10" height={wellBottomY - gy} fill="white" stroke="#2E7D32" strokeWidth="1.5" />
+              <rect x={wx - 5} y={gy + (wellBottomY - gy) * 0.4} width="10" height={(wellBottomY - gy) * 0.6} fill="url(#cs-screen)" opacity="0.7" />
+              <line x1={wx} y1={gy} x2={wx} y2={wellBottomY - 16} stroke="#2E7D32" strokeWidth="1" />
+              <rect x={wx - 3} y={wellBottomY - 16} width="6" height="12" fill="#2E7D32" rx="1" />
+            </g>
+          ))}
+        </g>
+      )}
+
+      {(method === 'Sump Pumping' || method === 'Open Cut Dewatering') && (
+        <g>
+          {(() => {
+            const sX = excX + 6
+            const sTop = formY
+            const sBot = yAt(D + 1)
+            return (
+              <g>
+                <rect x={sX} y={sTop} width="22" height={sBot - sTop} fill="#6A1B9A" opacity="0.22" stroke="#6A1B9A" strokeWidth="1.5" />
+                <rect x={sX + 5} y={sBot - 11} width="12" height="9" fill="#6A1B9A" rx="1" />
+                <line x1={sX + 11} y1={sBot - 11} x2={sX + 11} y2={gy - 6} stroke="#6A1B9A" strokeWidth="2" />
+                <line x1={sX + 11} y1={gy - 6} x2={excX + excW + 16} y2={gy - 6} stroke="#6A1B9A" strokeWidth="2" />
+              </g>
+            )
+          })()}
+        </g>
+      )}
+
+      {/* ── elevation ruler (left) ── */}
+      <line x1={axisX} y1={gy} x2={axisX} y2={gy + drawH} stroke="#aaa" strokeWidth="1" />
+      <text x={axisX - 7} y={gy - 16} textAnchor="end" fontSize="8" fill="#aaa" fontFamily="Arial">{hasRL ? 'mASL' : 'm'}</text>
+      {ticks.filter((d) => !nearLevel(d)).map((d, i) => (
+        <g key={`t${i}`}>
+          <line x1={axisX - 4} y1={yAt(d)} x2={axisX} y2={yAt(d)} stroke="#bbb" strokeWidth="1" />
+          <text x={axisX - 7} y={yAt(d)} textAnchor="end" fontSize="8.5" fill="#999" fontFamily="Arial" dominantBaseline="central">{fmtVal(d)}</text>
         </g>
       ))}
-      <text x={gx+drawW/2} y={gy+(gwtY-gy)/2} textAnchor="middle" fontSize="9" fill="#666" fontFamily="Arial" dominantBaseline="central">{soil}</text>
-      <text x={gx+drawW/2} y={gwtY+(formY-gwtY)/2} textAnchor="middle" fontSize="9" fill="#1565C0" fontFamily="Arial" dominantBaseline="central" opacity="0.7">Saturated</text>
-      <text x={excX+excW/2} y={gy+(formY-gy)/2} textAnchor="middle" fontSize="10" fill="#999" fontFamily="Arial" dominantBaseline="central">Excavation</text>
-      <text x={svgW/2} y="14" textAnchor="middle" fontSize="11" fontWeight="600" fill="#333" fontFamily="Arial">Cross Section</text>
+
+      {/* ── key levels: ruler tick (left, coloured) + tag (right) ── */}
+      {levels.map((lv, i) => (
+        <g key={`l${i}`}>
+          <line x1={axisX - 6} y1={yAt(lv.d)} x2={axisX} y2={yAt(lv.d)} stroke={lv.color} strokeWidth="1.5" />
+          <text x={axisX - 9} y={yAt(lv.d)} textAnchor="end" fontSize="8.5" fontWeight="700" fill={lv.color} fontFamily="Arial" dominantBaseline="central">{fmtVal(lv.d)}</text>
+          <line x1={gx + drawW} y1={yAt(lv.d)} x2={gx + drawW + 5} y2={yAt(lv.d)} stroke={lv.color} strokeWidth="1" />
+          <text x={gx + drawW + 7} y={yAt(lv.d)} fontSize="8.5" fontWeight="600" fill={lv.color} fontFamily="Arial" dominantBaseline="central">{lv.label}</text>
+        </g>
+      ))}
+
+      {/* ── dimensions ── */}
+      <line x1={excX} y1={gy - 22} x2={excX + excW} y2={gy - 22} stroke="#666" strokeWidth="1" markerStart="url(#cs-arr)" markerEnd="url(#cs-arr)" />
+      <text x={excX + excW / 2} y={gy - 26} textAnchor="middle" fontSize="9.5" fill="#555" fontFamily="Arial">W: {W}m</text>
+      <line x1={excX + excW / 2} y1={gy} x2={excX + excW / 2} y2={formY} stroke="#999" strokeWidth="0.75" markerStart="url(#cs-arr)" markerEnd="url(#cs-arr)" opacity="0.7" />
+      <text x={excX + excW / 2 + 4} y={gy + (formY - gy) / 2} fontSize="9" fill="#777" fontFamily="Arial" dominantBaseline="central">D: {D}m</text>
+
+      {/* labels */}
+      <text x={gx + drawW / 2} y={gy + (gwtY - gy) / 2} textAnchor="middle" fontSize="9" fill="#666" fontFamily="Arial" dominantBaseline="central">{soil}</text>
+      <text x={excX + excW / 2} y={formY + 14} textAnchor="middle" fontSize="9" fill="#999" fontFamily="Arial">Excavation</text>
+      <text x={svgW / 2} y="14" textAnchor="middle" fontSize="11" fontWeight="600" fill="#333" fontFamily="Arial">
+        Cross Section{method ? ` — ${method}` : ''}
+      </text>
     </svg>
   )
 }
@@ -211,6 +348,7 @@ export default function EstimatorClient({ userId, initialPrices, initialEstimate
     aquiferThickness:'',projectDuration:'',riskLevel:'Medium',
     projectName:'',location:'',preparedBy:'',
     dieselLitersPerHrPerPump:'2.5',operatingHrsPerDay:'8',dieselPricePerLiter:'68',
+    groundElevation:'',
   })
   const [markups, setMarkups] = useState<CategoryMarkups>({
     mobilization:40,drilling:45,installation:40,rental:100,diesel:15,om:20,demobilization:40,
@@ -263,12 +401,15 @@ export default function EstimatorClient({ userId, initialPrices, initialEstimate
     const safetyFactor=inputs.riskLevel==='High'?2.0:inputs.riskLevel==='Medium'?1.5:1.25
     const R=3000*drawdown*Math.sqrt(k)
     const re=Math.sqrt((L*W)/Math.PI)
-    const hw=0.5
+    // Water height at the excavation AFTER drawdown (Dupuit-Thiem h_w), floored so the
+    // log/quadratic terms stay finite if requested drawdown approaches aquifer thickness.
+    const hw=Math.max(H-drawdown,0.5)
     const lnRre=Math.log(R/Math.max(re,0.1))
     const Q_ms=(Math.PI*k*(H*H-hw*hw))/lnRre
     const Q_m3hr=Q_ms*3600
     const Q_design=Q_m3hr*safetyFactor
     const TDH=drawdown+5
+    // Hydraulic power P = ρgQH / (η_pump · η_motor), with 65% pump and 90% motor efficiency → kW
     const pumpPower=(Q_design/3600*1000*9.81*TDH)/(0.65*0.90)/1000
     const methodResult=overrideMethod&&selectedMethod?{method:selectedMethod,reason:'Method manually selected by engineer.',alt:''}:selectMethod(drawdown,k,L,W)
     const method=methodResult.method
@@ -506,7 +647,6 @@ export default function EstimatorClient({ userId, initialPrices, initialEstimate
     },{} as Record<string,EquipmentItem[]>)
   ):[]
 
-  // The full JSX is identical to the original — only auth parts changed
   return (
     <div style={{minHeight:'100vh',background:'#f0f4f8',fontFamily:'Arial, sans-serif'}}>
       <div style={{maxWidth:'1200px',margin:'0 auto',padding:'28px 24px'}}>
@@ -588,6 +728,7 @@ export default function EstimatorClient({ userId, initialPrices, initialEstimate
               <div style={sectionStyle}>
                 <h2 style={{fontSize:'15px',fontWeight:'600',color:'#0d2137',margin:'0 0 16px 0'}}>💧 Groundwater Conditions</h2>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:'14px'}}>
+                  <div><label style={labelStyle}>Ground RL (mASL)</label><input {...inp('groundElevation')} type="number" placeholder="optional, e.g. 12.5" style={inputStyle}/></div>
                   <div><label style={labelStyle}>GWT Depth (m) *</label><input {...inp('groundwaterDepth')} type="number" placeholder="1.5" style={inputStyle}/></div>
                   <div><label style={labelStyle}>Extra Drawdown (m)</label><input {...inp('requiredDrawdown')} type="number" placeholder="0.5" style={inputStyle}/></div>
                   <div><label style={labelStyle}>Aquifer Type</label><select {...inp('aquiferType')} style={inputStyle}><option>Unconfined</option><option>Confined</option><option>Artesian</option></select></div>
@@ -741,7 +882,7 @@ export default function EstimatorClient({ userId, initialPrices, initialEstimate
               <h2 style={{fontSize:'15px',fontWeight:'600',color:'#0d2137',margin:'0 0 16px 0'}}>📐 System Diagrams</h2>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px'}}>
                 <div style={{background:'#f8f9fa',borderRadius:'10px',padding:'12px'}}><PlanView results={results} inputs={inputs}/></div>
-                <div style={{background:'#f8f9fa',borderRadius:'10px',padding:'12px'}}><CrossSection inputs={inputs}/></div>
+                <div style={{background:'#f8f9fa',borderRadius:'10px',padding:'12px'}}><CrossSection inputs={inputs} results={results}/></div>
               </div>
             </div>
             <div style={sectionStyle}>
