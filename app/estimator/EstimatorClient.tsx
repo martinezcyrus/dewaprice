@@ -12,6 +12,9 @@ interface SiteInputs {
   projectName: string; location: string; preparedBy: string
   dieselLitersPerHrPerPump: string; operatingHrsPerDay: string; dieselPricePerLiter: string
   groundElevation: string
+  wellDesignMode: 'auto' | 'manual'
+  manualWellSpacing: string
+  manualWellDepthBelowFormation: string
 }
 
 interface CategoryMarkups {
@@ -32,6 +35,7 @@ interface CalcResults {
   designFlow: number; drawdown: number
   wellpointCount: number; wellpointStages: number; headerPipeLength: number
   wellCount: number; wellSpacing: number; wellDepth: number
+  wellDesignMode: 'auto' | 'manual'; wellsNeededForFlow: number
   pumpFlowRate: number; pumpTDH: number; pumpPower: number
   dieselLiters: number; dieselCost: number
   equipment: EquipmentItem[]
@@ -349,6 +353,7 @@ export default function EstimatorClient({ userId, initialPrices, initialEstimate
     projectName:'',location:'',preparedBy:'',
     dieselLitersPerHrPerPump:'2.5',operatingHrsPerDay:'8',dieselPricePerLiter:'68',
     groundElevation:'',
+    wellDesignMode:'auto',manualWellSpacing:'20',manualWellDepthBelowFormation:'6',
   })
   const [markups, setMarkups] = useState<CategoryMarkups>({
     mobilization:40,drilling:45,installation:40,rental:100,diesel:15,om:20,demobilization:40,
@@ -420,7 +425,7 @@ export default function EstimatorClient({ userId, initialPrices, initialEstimate
 
     let equipment:EquipmentItem[]=[]
     let wellpointCount=0,wellpointStages=0,headerPipeLength=0
-    let wellCount=0,wellSpacing=0,wellDepth=0
+    let wellCount=0,wellSpacing=0,wellDepth=0,wellsNeededForFlow=0
 
     const addItem=(sectionId:string,description:string,unit:string,qty:number,dur:number,unitCost:number,markupPct:number)=>{
       const isTime=['month','week','day'].includes(unit)
@@ -441,9 +446,18 @@ export default function EstimatorClient({ userId, initialPrices, initialEstimate
       addItem('2','Wellpoint riser 50mm with 1m perforated screen','unit',wellpointCount,1,findPrice('Wellpoint tip','wellpoint')||680,mu.drilling)
       addItem('2','Filter aggregate / silica sand','tons',wellpointCount*0.1,1,findPrice('Filter aggregate','wellpoint')||1800,mu.drilling)
     } else if(method==='Deep Wells'||method==='Eductor Wells') {
-      wellCount=Math.max(2,Math.ceil(Q_design/15))
-      wellSpacing=perimeter/wellCount
-      wellDepth=D+drawdown+3
+      wellsNeededForFlow=Math.max(2,Math.ceil(Q_design/15))
+      if(inputs.wellDesignMode==='manual'){
+        const spacing=parseFloat(inputs.manualWellSpacing)||20
+        const depthBelow=parseFloat(inputs.manualWellDepthBelowFormation)||6
+        wellCount=Math.max(2,Math.ceil(perimeter/spacing))
+        wellSpacing=spacing
+        wellDepth=D+depthBelow
+      } else {
+        wellCount=wellsNeededForFlow
+        wellSpacing=perimeter/wellCount
+        wellDepth=D+drawdown+3
+      }
       addItem('2','Drilling costs — piling rig','well-m',wellCount*wellDepth,1,findPrice('Drilling costs','deepwell')||300,mu.drilling)
       addItem('2','PVC well screens 200mm corrugated','m',wellCount*wellDepth*0.7,1,findPrice('PVC Wellscreen','deepwell')||102,mu.drilling)
       addItem('2','PVC plain casings 200mm','m',wellCount*wellDepth*0.3,1,findPrice('PVC Plain Casing','deepwell')||95,mu.drilling)
@@ -515,7 +529,7 @@ export default function EstimatorClient({ userId, initialPrices, initialEstimate
     const totalSellingPrice=equipment.reduce((s,e)=>s+e.sellingPrice,0)
     const grossMargin=totalSellingPrice>0?(totalSellingPrice-totalCostPrice)/totalSellingPrice:0
 
-    setResults({method,methodReason:methodResult.reason,alternativeMethod:methodResult.alt,radiusOfInfluence:R,equivalentRadius:re,totalInflow:Q_m3hr,designFlow:Q_design,drawdown,wellpointCount,wellpointStages,headerPipeLength,wellCount,wellSpacing,wellDepth,pumpFlowRate:Q_design,pumpTDH:TDH,pumpPower,dieselLiters,dieselCost,equipment,totalCostPrice,totalSellingPrice,grossMargin})
+    setResults({method,methodReason:methodResult.reason,alternativeMethod:methodResult.alt,radiusOfInfluence:R,equivalentRadius:re,totalInflow:Q_m3hr,designFlow:Q_design,drawdown,wellpointCount,wellpointStages,headerPipeLength,wellCount,wellSpacing,wellDepth,wellDesignMode:inputs.wellDesignMode,wellsNeededForFlow,pumpFlowRate:Q_design,pumpTDH:TDH,pumpPower,dieselLiters,dieselCost,equipment,totalCostPrice,totalSellingPrice,grossMargin})
     setSelectedMethod(method)
     setStep(3)
     setCalculating(false)
@@ -807,6 +821,42 @@ export default function EstimatorClient({ userId, initialPrices, initialEstimate
                     ))}
                   </div>
                 )}
+                <div style={{marginTop:'16px',paddingTop:'16px',borderTop:'1px solid #eee'}}>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap' as const,gap:'8px',marginBottom:'10px'}}>
+                    <span style={{fontSize:'13px',fontWeight:'600',color:'#0d2137'}}>Well Design <span style={{fontSize:'11px',fontWeight:'400',color:'#999'}}>(deep / eductor wells)</span></span>
+                    <div style={{display:'flex',gap:'4px',background:'#f0f4f8',borderRadius:'8px',padding:'3px'}}>
+                      {(['auto','manual'] as const).map(mode=>(
+                        <button key={mode} onClick={()=>setInputs({...inputs,wellDesignMode:mode})} style={{padding:'6px 14px',background:inputs.wellDesignMode===mode?'white':'transparent',color:inputs.wellDesignMode===mode?'#1565C0':'#666',border:'none',borderRadius:'6px',fontSize:'12px',fontWeight:inputs.wellDesignMode===mode?'700':'400',cursor:'pointer',boxShadow:inputs.wellDesignMode===mode?'0 1px 4px rgba(0,0,0,0.1)':'none',textTransform:'capitalize' as const}}>{mode}</button>
+                      ))}
+                    </div>
+                  </div>
+                  {inputs.wellDesignMode==='auto'?(
+                    <p style={{fontSize:'12px',color:'#999',margin:0}}>Well count, spacing and depth are derived automatically from the design flow.</p>
+                  ):(
+                    <div>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px'}}>
+                        <div><label style={labelStyle}>Well Spacing (m)</label><input {...inp('manualWellSpacing')} type="number" placeholder="20" style={inputStyle}/></div>
+                        <div><label style={labelStyle}>Well Depth below formation (m)</label><input {...inp('manualWellDepthBelowFormation')} type="number" placeholder="6" style={inputStyle}/></div>
+                      </div>
+                      {(()=>{
+                        const Lp=parseFloat(inputs.excavationLength)||0
+                        const Wp=parseFloat(inputs.excavationWidth)||0
+                        const peri=2*(Lp+Wp)
+                        const spacing=parseFloat(inputs.manualWellSpacing)||20
+                        const depthBelow=parseFloat(inputs.manualWellDepthBelowFormation)||6
+                        const Dp=parseFloat(inputs.excavationDepth)||0
+                        const count=peri>0?Math.max(2,Math.ceil(peri/spacing)):0
+                        return(
+                          <div style={{marginTop:'10px',fontSize:'12px',color:'#555',background:'#f8f9fa',borderRadius:'8px',padding:'10px 12px',lineHeight:'1.7'}}>
+                            Perimeter {peri.toFixed(0)}m ÷ {spacing}m spacing → <strong>{count} wells</strong><br/>
+                            Well depth: {Dp}m excavation + {depthBelow}m = <strong>{(Dp+depthBelow).toFixed(1)}m below GL</strong>
+                            <div style={{fontSize:'11px',color:'#bbb',marginTop:'4px'}}>Flow-capacity check appears in results — tune spacing until it clears.</div>
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  )}
+                </div>
               </div>
               <button onClick={()=>setStep(2)} disabled={!isStep1Valid} style={{width:'100%',padding:'14px',background:isStep1Valid?'linear-gradient(135deg, #1565C0, #0288D1)':'#ccc',color:'white',border:'none',borderRadius:'10px',fontSize:'15px',fontWeight:'600',cursor:isStep1Valid?'pointer':'not-allowed'}}>Review Inputs → Next Step</button>
             </div>
@@ -888,13 +938,23 @@ export default function EstimatorClient({ userId, initialPrices, initialEstimate
             <div style={sectionStyle}>
               <h2 style={{fontSize:'15px',fontWeight:'600',color:'#0d2137',margin:'0 0 16px 0'}}>🔢 Hydraulic Calculations</h2>
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:'10px'}}>
-                {[{label:'Drawdown',value:`${results.drawdown.toFixed(2)} m`},{label:'Radius of Influence',value:`${results.radiusOfInfluence.toFixed(1)} m`},{label:'Total Inflow Q',value:`${results.totalInflow.toFixed(1)} m³/hr`},{label:'Design Flow',value:`${results.designFlow.toFixed(1)} m³/hr`},{label:'TDH',value:`${results.pumpTDH.toFixed(1)} m`},{label:'Required Power',value:`${results.pumpPower.toFixed(1)} kW`},{label:'Diesel Total',value:`${results.dieselLiters.toFixed(0)} L`}].map(item=>(
+                {[{label:'Drawdown',value:`${results.drawdown.toFixed(2)} m`},{label:'Radius of Influence',value:`${results.radiusOfInfluence.toFixed(1)} m`},{label:'Total Inflow Q',value:`${results.totalInflow.toFixed(1)} m³/hr`},{label:'Design Flow',value:`${results.designFlow.toFixed(1)} m³/hr`},{label:'TDH',value:`${results.pumpTDH.toFixed(1)} m`},{label:'Required Power',value:`${results.pumpPower.toFixed(1)} kW`},...(results.wellCount>0?[{label:'No. of Wells',value:`${results.wellCount}`},{label:'Well Spacing',value:`${results.wellSpacing.toFixed(1)} m`},{label:'Well Depth',value:`${results.wellDepth.toFixed(1)} m`}]:[]),{label:'Diesel Total',value:`${results.dieselLiters.toFixed(0)} L`}].map(item=>(
                   <div key={item.label} style={{background:'#f8f9fa',borderRadius:'8px',padding:'12px',textAlign:'center' as const}}>
                     <div style={{fontSize:'10px',color:'#999',fontWeight:'700',textTransform:'uppercase' as const,marginBottom:'4px'}}>{item.label}</div>
                     <div style={{fontSize:'17px',fontWeight:'bold',color:methodColor}}>{item.value}</div>
                   </div>
                 ))}
               </div>
+              {results.wellDesignMode==='manual'&&results.wellCount>0&&(()=>{
+                const ok=results.wellCount>=results.wellsNeededForFlow
+                return(
+                  <div style={{marginTop:'12px',padding:'10px 14px',borderRadius:'8px',fontSize:'13px',fontWeight:'500',background:ok?'#E8F5E9':'#FFF3E0',color:ok?'#2E7D32':'#E65100',border:`1px solid ${ok?'#A5D6A7':'#FFCC80'}`}}>
+                    {ok
+                      ?`✅ Manual well design: ${results.wellCount} wells from ${results.wellSpacing.toFixed(0)}m spacing — sufficient for the design flow (needs ≥ ${results.wellsNeededForFlow}).`
+                      :`⚠️ Manual well design: ${results.wellCount} wells from ${results.wellSpacing.toFixed(0)}m spacing — design flow needs ≥ ${results.wellsNeededForFlow} wells. Reduce spacing to add wells.`}
+                  </div>
+                )
+              })()}
             </div>
             <div style={sectionStyle}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px',flexWrap:'wrap' as const,gap:'10px'}}>
